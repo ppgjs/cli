@@ -1,0 +1,7 @@
+{
+  "extends": "soybeanjs",
+  "rules": {
+    "no-console": "off",
+    "semi": "off"
+  }
+}
