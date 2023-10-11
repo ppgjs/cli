@@ -40,3 +40,23 @@ export interface CliOption {
    */
   lintStagedConfig: Record<string, string | string[]>;
 }
+
+export interface EnquirerBasePromptOptions {
+  name: string | (() => string);
+  type: string | (() => string);
+  message: string | (() => string) | (() => Promise<string>);
+  default?: string;
+  prefix?: string;
+  initial?: any;
+  required?: boolean;
+  enabled?: boolean | string;
+  disabled?: boolean | string;
+  format?(value: string): string | Promise<string>;
+  result?(value: string): string | Promise<string>;
+  skip?: ((state: object) => boolean | Promise<boolean>) | boolean;
+  validate?(value: string): boolean | string | Promise<boolean | string>;
+  onSubmit?(name: string, value: any, prompt: any): boolean | Promise<boolean>;
+  onCancel?(name: string, value: any, prompt: any): boolean | Promise<boolean>;
+  stdin?: NodeJS.ReadStream;
+  stdout?: NodeJS.WriteStream;
+}

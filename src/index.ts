@@ -3,9 +3,9 @@ import { loadCliOptions } from './config';
 import type { CliOption } from './types/index';
 
 import { version } from '../package.json';
-import { gitCommit } from './command';
+import { getVersion, gitCommit } from './command';
 
-type Command = 'test';
+type Command = 'test' | 'git-version';
 
 type CommandActions<T extends object> = (args?: T) => Promise<void> | void;
 
@@ -25,6 +25,12 @@ async function setupCli() {
       desc: '这是一个测试脚本',
       action: async () => {
         await gitCommit(cliOptions.gitCommitTypes, cliOptions.gitCommitScopes);
+      }
+    },
+    'git-version': {
+      desc: '分支操作流程',
+      action: async () => {
+        await getVersion();
       }
     }
   };
