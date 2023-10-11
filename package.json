@@ -1,6 +1,7 @@
 {
   "name": "boyce-pan-cli",
   "version": "1.0.0",
+  "flag": 12323,
   "description": "",
   "scripts": {
     "build": "unbuild",

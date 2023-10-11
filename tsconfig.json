@@ -13,10 +13,10 @@
     "noUnusedLocals": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
-    "paths": {
+    "types": ["node"]
+    /* "paths": {
       "@/*": ["./src/*"]
-    }
+    } */
   },
   "include": ["src/**/*", "typings/**/*"],
   "exclude": ["node_modules", "dist"]
