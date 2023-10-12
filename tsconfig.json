@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
     "module": "ESNext",
     "target": "ESNext",
     "lib": ["DOM", "ESNext"],
+    "outDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

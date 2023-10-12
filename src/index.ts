@@ -5,9 +5,9 @@ import { loadCliOptions } from './config';
 import type { CliOption } from './types/index';
 
 import { version } from '../package.json';
-import { getVersion, gitCommit } from './command';
+import { getVersion, gitCommit, gitCommitVerify } from './command';
 
-type Command = 'test' | 'git-version';
+type Command = 'git-commit' | 'git-commit-verify' | 'git-version';
 
 type CommandActions<T extends object> = (args?: T) => Promise<void> | void;
 
@@ -23,8 +23,8 @@ async function setupCli() {
   cli.version(version).option('--total', 'Generate changelog by total tags').help();
 
   const commands: CommandWithAction<CommandArg> = {
-    test: {
-      desc: '这是一个测试脚本',
+    'git-commit': {
+      desc: '创建一个符合 Conventional Commit 规范的提交信息',
       action: async () => {
         await gitCommit(cliOptions.gitCommitTypes, cliOptions.gitCommitScopes);
       }
@@ -33,6 +33,12 @@ async function setupCli() {
       desc: '分支操作流程',
       action: async () => {
         await getVersion();
+      }
+    },
+    'git-commit-verify': {
+      desc: '检测最近的一次commit信息是否符合 Conventional Commit规范',
+      action: async () => {
+        await gitCommitVerify();
       }
     }
   };

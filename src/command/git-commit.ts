@@ -12,9 +12,6 @@ export async function gitCommit(
   gitCommitTypes: CliOption['gitCommitTypes'],
   gitCommitScopes: CliOption['gitCommitScopes']
 ) {
-  console.log('7行 - git-commit.ts -:gitCommitTypes => ', gitCommitTypes);
-  console.log('8行 - git-commit.ts -:gitCommitScopes => ', gitCommitScopes);
-
   const typesChoices = gitCommitTypes.map(([name, title]) => {
     const nameWithSuffix = `${name}:`;
     const message = `${nameWithSuffix.padEnd(12)}${title}`;
