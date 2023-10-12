@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import cac from 'cac';
 import { loadCliOptions } from './config';
 import type { CliOption } from './types/index';
