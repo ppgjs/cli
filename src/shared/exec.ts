@@ -1,8 +1,14 @@
-import type { Options } from 'execa';
+import { execa, execaSync, type Options } from 'execa';
 
+// 异步执行
 export async function execCommand(cmd: string, args: string[] = [], options: Options = {}) {
-  const { execa } = await import('execa');
   const res = await execa(cmd, args, options);
+  return res?.stdout?.trim() || '';
+}
+
+// 同步执行
+export function execCommandSync(cmd: string, args: string[] = []) {
+  const res = execaSync(cmd, args);
   return res?.stdout?.trim() || '';
 }
 

@@ -1,7 +1,9 @@
 import Enquirer from 'enquirer';
 import {
   PromptMap,
+  checkBranch,
   execCommand,
+  execCommandSync,
   exitWithError,
   gitCheckoutBranch,
   gitPull,
@@ -57,16 +59,22 @@ export async function getVersion() {
   await versionInfo.init();
   await checkInvalidBranch();
   await versionInfo.setVersionNumber();
-  await gitPullMaster();
-  await backToOriginalBranch();
+  // await gitPullMaster();
+  // await backToOriginalBranch();
+  console.log('63行 - git-version.ts  => ', execCommandSync('git branch -r'));
+  const hasMain = await checkBranch(['master', 'main']);
+  console.log('🚀 ~ file: git-version.ts:64 ~ hasMain:', hasMain);
 }
 
+// 拉取master最新代码
 async function gitPullMaster() {
   // const mainBranch = git config --get init.defaultBranch
   const mainBranch = await execCommand('git config --get init.defaultBranch');
+  console.log('67行 - git-version.ts  => ', mainBranch);
   await gitCheckoutBranch(mainBranch);
   await gitPull(true);
 }
+
 async function backToOriginalBranch() {
   await gitCheckoutBranch(versionInfo.originBranch);
 }

@@ -2,7 +2,7 @@
   "name": "boyce-pan-cli",
   "version": "1.0.0",
   "flag": 12323,
-  "description": "",
+  "description": "这是一个描述",
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
