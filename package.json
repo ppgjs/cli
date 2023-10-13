@@ -1,6 +1,6 @@
 {
   "name": "boyce-pan-cli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "这是一个描述",
   "scripts": {
     "build": "unbuild",
@@ -49,8 +49,11 @@
   "dependencies": {
     "c12": "^1.4.2",
     "cac": "^6.7.14",
+    "cli-spinners": "^2.9.1",
     "enquirer": "^2.4.1",
     "execa": "^8.0.1",
-    "kolorist": "^1.8.0"
+    "kolorist": "^1.8.0",
+    "log-update": "^5.0.1",
+    "ora": "^7.0.1"
   }
 }

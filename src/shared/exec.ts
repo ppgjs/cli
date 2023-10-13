@@ -7,13 +7,6 @@ export async function execCommand(cmd: string, args: string[] = [], options: Opt
   return res?.stdout?.trim() || '';
 }
 
-// 同步执行
-export function execCommandSync(cmd: string, args: string[] = []) {
-  // const { execa } = await import('execa');
-  // const res = execaSync(cmd, args);
-  // return res?.stdout?.trim() || '';
-}
-
 export async function testDir() {
   const a = await execCommand('git', ['rev-parse', '--show-toplevel']);
 

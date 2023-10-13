@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { execCommand } from '../shared';
-import chalk from 'chalk';
 import path from 'path';
+import * as kolorist from 'kolorist';
 
 export async function gitCommitVerify() {
   const gitPath = await execCommand('git', ['rev-parse']);
@@ -13,9 +13,9 @@ export async function gitCommitVerify() {
   const REG_EXP = /(?<type>[a-z]+)(\((?<scope>[a-z]+)\))?(?<breaking>!)?:(?<description>.+)/i;
   if (!REG_EXP.test(commitMsg)) {
     throw new Error(
-      `${chalk.bgRed(' ERROR ')} ${chalk.red('Git提交信息不符合 Git Conventional Message 规范!\n\n')}${chalk.green(
-        '推荐使用命令 pnpm commit 生成符合规范的Git提交信息'
-      )}`
+      `${kolorist.bgRed(' ERROR ')} ${kolorist.red(
+        'Git提交信息不符合 Git Conventional Message 规范!\n\n'
+      )}${kolorist.green('推荐使用命令 pnpm commit 生成符合规范的Git提交信息')}`
     );
   }
 }
