@@ -5,9 +5,9 @@ import { loadCliOptions } from './config';
 import type { CliOption } from './types/index';
 
 import { version } from '../package.json';
-import { getVersion, gitCommit, gitCommitVerify } from './command';
+import { getVersion, gitCommit, gitCommitVerify, openStore } from './command';
 
-type Command = 'git-commit' | 'git-commit-verify' | 'git-version';
+type Command = 'git-commit' | 'open' | 'git-commit-verify' | 'git-version';
 
 type CommandActions<T extends object> = (args?: T) => Promise<void> | void;
 
@@ -39,6 +39,12 @@ async function setupCli() {
       desc: '检测最近的一次commit信息是否符合 Conventional Commit规范',
       action: async () => {
         await gitCommitVerify();
+      }
+    },
+    open: {
+      desc: '在浏览器打开当前仓库',
+      action: async () => {
+        await openStore();
       }
     }
   };
