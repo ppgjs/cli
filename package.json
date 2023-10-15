@@ -1,7 +1,7 @@
 {
   "name": "boyce-pan-cli",
-  "version": "0.0.9",
-  "description": "这是一个描述",
+  "version": "0.0.20",
+  "description": "一个好用的cli",
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
@@ -14,7 +14,7 @@
     "ncu": "soy ncu",
     "publish-pkg": "pnpm -r publish --access public",
     "typecheck": "tsc --noEmit",
-    "release": "soy release && pnpm build && pnpm publish-pkg",
+    "release": "pnpm build && npx pz release && npm publish",
     "test": "node dist/index.cjs --help"
   },
   "bin": {
@@ -47,6 +47,7 @@
     "unbuild": "^2.0.0"
   },
   "dependencies": {
+    "bumpp": "^9.2.0",
     "c12": "^1.4.2",
     "cac": "^6.7.14",
     "cli-spinners": "^2.9.1",

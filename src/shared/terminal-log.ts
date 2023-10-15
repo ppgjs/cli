@@ -6,6 +6,8 @@ type NonUndefined<T> = T extends undefined ? never : T;
 type Spinner = NonUndefined<Options['spinner']>;
 
 const defaultStyle: Spinner = 'simpleDotsScrolling';
+
+// 终端等待的loading
 class TerminalLog {
   // 挑了几个更加图形化的模式
   shapeList: Spinner[] = [defaultStyle, 'monkey', 'speaker', 'moon', 'earth', 'smiley'];

@@ -5,19 +5,19 @@ import { loadCliOptions } from './config';
 import type { CliOption, EGitVersionActionType } from './types/index';
 
 import { version } from '../package.json';
-import { getVersion, gitCommit, gitCommitVerify, openStore } from './command';
+import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './command';
 import { exitWithError } from './shared';
 
-type Command = 'git-commit' | 'open' | 'git-commit-verify' | 'git-version [actionType]';
+type Command = 'git-commit' | 'open' | 'git-commit-verify' | 'git-version [actionType]' | 'release';
 
 type CommandActions<T extends object> = (args?: T) => Promise<void> | void;
 
 type CommandWithAction<A extends object = object> = Record<
   Command,
   {
-    desc: string;
-    alias?: string;
-    action: CommandActions<A>;
+    desc: string; // 命令描述
+    alias?: string; // 别名
+    action: CommandActions<A>; // 执行函数
   }
 >;
 
@@ -45,6 +45,7 @@ async function setupCli() {
     },
     'git-version [actionType]': {
       desc: '分支操作流程',
+      alias: 'gv',
       action: async actionType => {
         try {
           await getVersion(<EGitVersionActionType>(<unknown>actionType));
@@ -55,14 +56,23 @@ async function setupCli() {
     },
     'git-commit-verify': {
       desc: '检测最近的一次commit信息是否符合 Conventional Commit规范',
+      alias: 'gcv',
       action: async () => {
         await gitCommitVerify();
       }
     },
     open: {
       desc: '在浏览器打开当前仓库',
+      alias: 'o',
       action: async () => {
         await openStore();
+      }
+    },
+    release: {
+      desc: '发布：更新版本号、生成changelog、提交代码',
+      alias: 'r',
+      action: async () => {
+        await release();
       }
     }
   };

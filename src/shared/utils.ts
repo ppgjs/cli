@@ -1,5 +1,5 @@
 import { execCommand } from './exec';
-import { logError } from './log';
+import { logError, logSuccess } from './log';
 
 /**
  * @description: 睡眠
@@ -24,12 +24,16 @@ export const openBrowserUrl = (url: string) => {
 };
 
 // 执行成功退出进程
-export function exitWithSuccess() {
+export function exitWithSuccess(wait = true) {
+  if (!wait) {
+    logSuccess('cli执行完成');
+    return '脚本执行完成';
+  }
   return new Promise(resolve => {
     // 监听键盘输入
     process.stdin.setRawMode(true);
     process.stdin.resume();
-    logError('cli执行完成，按任意键退出。');
+    logSuccess('cli执行完成，按任意键退出。');
     process.stdin.on('data', () => {
       resolve('脚本执行完成');
       process.exit();

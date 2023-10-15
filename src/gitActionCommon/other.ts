@@ -11,9 +11,10 @@ export const getActionType = async (defaultType?: EGitVersionActionType) => {
   }
 
   if (!actionType) {
-    const actionTypeArr = Object.keys(EGitVersionActionType).map(
-      key => `${key.padEnd(10)}${actionDescription[<EGitVersionActionType>key]}`
-    );
+    const actionTypeArr = Object.keys(EGitVersionActionType).map(key => ({
+      name: key,
+      message: `${key.padEnd(10)}${actionDescription[<EGitVersionActionType>key]}`
+    }));
 
     const { choicesActionType } = await Enquirer.prompt<{ choicesActionType: EGitVersionActionType }>([
       {

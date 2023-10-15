@@ -1,6 +1,8 @@
+import Enquirer from 'enquirer';
 import { GitInfo } from '../config';
 import { execCommand, exitWithError, logError, logSuccess, logWarn, sleep, terminalLog } from '../shared';
 import { versionInfo } from './version-info';
+import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
 
 // 退回到原分支
 export function backToOriginalBranch() {
@@ -22,6 +24,21 @@ export async function mergeAToB(A: string, B: string) {
     terminalLog.SuccessEnd(`合并分支:${A} to ${B} 合并完成`);
   }
   await gitPull();
+}
+
+// 拉取master最新代码
+export async function gitPullMainNewCode() {
+  await gitCheckoutBranch(versionInfo.projectMainBranch);
+  await gitPull(true);
+}
+
+// 检测当前分支是否支持执行脚本
+export async function checkInvalidBranch() {
+  if (versionInfo.originBranch === 'master' || versionInfo.originBranch.endsWith('/main')) {
+    logError(`当前分支 ${versionInfo.originBranch} 错误，不能进行合并操作`);
+    return exitWithError();
+  }
+  return true;
 }
 
 // 获取当前分支
@@ -53,11 +70,13 @@ export async function verifyMergeStatus() {
 }
 
 // 推送当前分支到远程
-export async function gitPush(showMessage = true) {
-  const result = await execCommand('git', ['push', '-u', GitInfo.useRemote, '-u']);
+export async function gitPush(showMessage = true, branch = '') {
+  const pushUseBranch = branch || (await gitGetCurrentBranch());
+
+  const result = await execCommand('git', ['push', '-u', GitInfo.useRemote, pushUseBranch]);
+
   if (showMessage) {
-    const branch = await gitGetCurrentBranch();
-    logSuccess(`推送分支 ${branch} 到 远程${GitInfo.useRemote}`);
+    logSuccess(`推送分支 ${pushUseBranch} 到 远程${GitInfo.useRemote}`);
   }
   return result;
 }
@@ -73,16 +92,25 @@ export async function gitPull(showMessage = true) {
 }
 
 export async function gitCheckoutBranch(branch: string, logMessage = '') {
+  const currentBranch = await gitGetCurrentBranch();
+  if (currentBranch === branch) return true;
   await execCommand('git', ['checkout', branch]);
   logSuccess(logMessage || `切换分支到 ${branch}`);
+  return true;
 }
 
 // 删除分支
 export async function gitDeleteBranch(
   branchName: string,
-  options = {
+  options: {
+    deleteRemote?: boolean;
+    deleteLocal?: boolean;
+    showLog?: boolean;
+    logMessage?: string;
+  } = {
     deleteRemote: false,
     deleteLocal: true,
+    showLog: true,
     logMessage: ''
   }
 ) {
@@ -92,24 +120,20 @@ export async function gitDeleteBranch(
   if (options.deleteRemote) {
     await execCommand('git', ['push', GitInfo.useRemote, '--delete', branchName]);
   }
-  if (options.deleteLocal || options.deleteRemote) logSuccess(options?.logMessage || `删除分支 ${branchName} 成功`);
+  if ((options.deleteLocal || options.deleteRemote) && options.showLog)
+    logSuccess(options?.logMessage || `删除分支 ${branchName} 成功`);
 }
 
 // 校验版本号
 export function verifyVersion(version: string) {
-  const reg = /^.*[0-9]{1,4}(\.[0-9]{1,4}){2,3}$/;
-  return reg.test(version);
+  return RegGitVersion.test(version);
 }
 
-/**
- * @description: 检测分支是否存在
- * @param {string} branch
- */
+// 检测分支是否存在
 export async function checkBranch(branch: string) {
   const [localBranch, remoteBranch] = await Promise.all([execCommand('git branch'), execCommand('git branch -r')]);
-  const RegSplit = /\n{1,}\s*/;
-  const localBranchArr = localBranch.split(RegSplit);
-  const remoteBranchArr = remoteBranch.split(RegSplit);
+  const localBranchArr = localBranch.split(RegResultSplitToArr).map(i => i.replace(/\*\s/, ''));
+  const remoteBranchArr = remoteBranch.split(RegResultSplitToArr);
 
   const localExist = localBranchArr.includes(branch);
   const remoteExist = Boolean(remoteBranchArr.find(i => i === `${GitInfo.useRemote}/${branch}`));
@@ -122,8 +146,132 @@ export async function checkBranch(branch: string) {
   };
 }
 
-export async function checkVersionMainBranch(version: string) {
-  const versionMainBranch = `${version}/main`;
+// 删除本地版本主分支
+async function deleteLocalVersionOriginMain() {
+  await gitDeleteBranch(versionInfo.versionMainBranch, { showLog: false });
+  return true;
+}
 
-  const allBranch = await execCommand('git branch -a');
+export async function checkVersionMainBranch() {
+  const pushMain = async () => {
+    await gitPush(true, versionInfo.versionMainBranch);
+    await deleteLocalVersionOriginMain();
+  };
+
+  const mainExist = await checkBranch(versionInfo.versionMainBranch);
+  if (mainExist.remoteExist) return;
+
+  if (mainExist.localExist) {
+    await pushMain();
+    return;
+  }
+
+  await gitPullMainNewCode();
+  await execCommand('git', ['branch', versionInfo.versionMainBranch]);
+  await pushMain();
+  logSuccess(`创建版本主分支 ${versionInfo.versionMainBranch}，并推送到远程`);
+}
+
+export async function readFunc() {
+  if (!versionInfo.funcName) {
+    const { inputFuncName } = await Enquirer.prompt<{ inputFuncName: string }>({
+      name: 'inputFuncName',
+      type: 'text',
+      message: '请输入新功能名',
+      validate: text => {
+        const trim = text.trim();
+        if (!trim.length) {
+          return '请输入有效的功能名称 ps: addPage | fixError';
+        } else if (/\s/.test(trim)) {
+          return '输入的版本号之间不能包含空格 ps: addPage | fixError';
+        }
+        return true;
+      }
+    });
+    versionInfo.setFuncName(inputFuncName.trim());
+  }
+  logWarn(`当前功能:${versionInfo.funcName}`);
+}
+
+// 检查功能分支是否存在
+async function checkFunBranchExist() {
+  const funcBranch = await versionInfo.getFuncFullName();
+  const { localExist, remoteExist, allExist } = await checkBranch(funcBranch);
+  if (allExist) {
+    logError(`版本功能分支 ${funcBranch} 已存在!!!`);
+    return true;
+  } else if (remoteExist) {
+    logError(`版本功能分支 ${funcBranch} 远程已经存在!!!`);
+    return true;
+  } else if (localExist) {
+    logError(`版本功能分支 ${funcBranch} 本地已经存在!!!`);
+    return true;
+  }
+  return false;
+}
+
+// 创建版本主分支 并推送到远程
+export async function createBranchFromProjectMainBranch() {
+  await readFunc();
+  const exist = await checkFunBranchExist();
+  if (exist) {
+    await backToOriginalBranch();
+    await exitWithError();
+  }
+
+  await gitPullMainNewCode();
+
+  const funcBranch = await versionInfo.getFuncFullName();
+  await execCommand('git', ['checkout', '-b', funcBranch]);
+  logSuccess(`${funcBranch} 功能分创建完成`);
+}
+
+export async function checkOriginMainBranchExist() {
+  const exist = await checkBranch(versionInfo.versionMainBranch);
+  if (!exist.remoteExist) {
+    logError(`抱歉 ${versionInfo.versionMainBranch} 版本主分支不存在`);
+    await exitWithError();
+  }
+  return true;
+}
+
+// 检测分支是否是该版本分支
+function checkBranchIsVersionFuncBranch(branch: string) {
+  if (
+    branch.startsWith(versionInfo.versionNumber) ||
+    branch.includes(`${GitInfo.useRemote}/${versionInfo.versionNumber}/`)
+  )
+    return true;
+  return false;
+}
+
+// 检测是否有该版本的功能分支未合并到主分支
+export async function checkVersionMainBranchHasNotMerged() {
+  await checkOriginMainBranchExist();
+  await gitCheckoutBranch(versionInfo.versionMainBranch);
+
+  gitPull();
+  const noMergeResult = await execCommand('git', ['branch', '-a', '--no-merged']);
+  const noMergeBranchArr = noMergeResult.split(RegResultSplitToArr);
+
+  try {
+    noMergeBranchArr.forEach((branch: string) => {
+      if (
+        branch === versionInfo.projectMainBranch ||
+        branch === `${GitInfo.useRemote}/${versionInfo.projectMainBranch}` ||
+        checkBranchIsVersionFuncBranch(branch)
+      ) {
+        throw new Error(`分支 ${branch} 还没合并，请先合并后再发布`);
+      }
+    });
+  } catch (error: any) {
+    logError(error);
+    await backToOriginalBranch();
+
+    if (versionInfo.originBranch !== (await gitGetCurrentBranch())) {
+      await deleteLocalVersionOriginMain();
+    }
+
+    await exitWithError();
+  }
 }
