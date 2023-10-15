@@ -7,7 +7,7 @@
 ### 安装
 
 ```bash
-pnpm i -D @ppg/cli
+pnpm i -D @ppgjs/cli
 ```
 
 ### 使用

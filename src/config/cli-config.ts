@@ -68,7 +68,7 @@ const defaultOptions: CliOption = {
 export async function loadCliOptions(overrides?: Partial<CliOption>, cwd = process.cwd()) {
   const { config } = await loadConfig({
     overrides,
-    name: 'pz',
+    name: 'ppg',
     defaults: defaultOptions,
     cwd,
     packageJson: true

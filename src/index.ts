@@ -27,7 +27,7 @@ interface CommandArg {
 async function setupCli() {
   const cliOptions = await loadCliOptions();
 
-  const cli = cac('pz');
+  const cli = cac('ppg');
 
   cli.version(version).option('--total', 'Generate changelog by total tags').help();
 

@@ -2,6 +2,8 @@ import Enquirer from 'enquirer';
 import { GitInfo } from '../config';
 import { execCommand, exitWithError, logError, logSuccess, logWarn, sleep, terminalLog } from '../shared';
 import { versionInfo } from './version-info';
+import * as kolorist from 'kolorist';
+
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
 
 // 退回到原分支
@@ -255,15 +257,20 @@ export async function checkVersionMainBranchHasNotMerged() {
   const noMergeBranchArr = noMergeResult.split(RegResultSplitToArr);
 
   try {
+    const versionFuncNoMergeArr: string[] = [];
     noMergeBranchArr.forEach((branch: string) => {
       if (
         branch === versionInfo.projectMainBranch ||
-        branch === `${GitInfo.useRemote}/${versionInfo.projectMainBranch}` ||
+        branch === `remotes/${GitInfo.useRemote}/${versionInfo.projectMainBranch}` ||
         checkBranchIsVersionFuncBranch(branch)
       ) {
-        throw new Error(`分支 ${branch} 还没合并，请先合并后再发布`);
+        const localBranch = branch.replace(`remotes/${GitInfo.useRemote}/`, '');
+        if (!versionFuncNoMergeArr.includes(localBranch)) versionFuncNoMergeArr.push(localBranch);
       }
     });
+    if (versionFuncNoMergeArr.length) {
+      throw new Error(`分支 [${kolorist.green(versionFuncNoMergeArr.join('，'))}] 还没合并，请先合并后再发布`);
+    }
   } catch (error: any) {
     logError(error);
     await backToOriginalBranch();
