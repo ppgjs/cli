@@ -1,3 +1,4 @@
+import * as kolorist from 'kolorist';
 import type { Options, Ora } from 'ora';
 
 type NonUndefined<T> = T extends undefined ? never : T;
@@ -31,7 +32,7 @@ class TerminalLog {
 
   async init() {
     const ora = await import('ora');
-    this.spinner = await ora.default({ color: 'blue', spinner: defaultStyle, prefixText: 'start' });
+    this.spinner = await ora.default({ color: 'green', spinner: defaultStyle, prefixText: 'start' });
   }
 
   setSpinnerStyle(spinner?: Spinner, prefixText?: string) {
@@ -41,7 +42,7 @@ class TerminalLog {
   }
 
   start(showDesc = 'loading', preTextFormat = 'loading **s') {
-    this.showDesc = showDesc;
+    this.showDesc = kolorist.red(showDesc);
     this.index = 0;
     this.preTextFormat = preTextFormat;
     this.spinner?.start(this.showDesc);
@@ -71,7 +72,7 @@ class TerminalLog {
       if (this.spinner && this.shapeList.length) {
         if (!(seconds % 3)) this.index = (this.index + 1) % this.shapeList.length;
         const prefixText = this.preTextFormat.replace('**', `${seconds}`);
-        this.setSpinnerStyle(this.shapeList[this.index], prefixText);
+        this.setSpinnerStyle(this.shapeList[this.index], kolorist.blue(kolorist.bgGreen(prefixText)));
       }
     }, 1000);
   }

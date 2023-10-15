@@ -1,5 +1,5 @@
-import type { EnquirerBasePromptOptions } from 'src/types';
-import { verifyVersion } from './gitUtils';
+import { verifyVersion } from '../gitActionCommon';
+import type { EnquirerBasePromptOptions } from '../types';
 
 type PromptMapKey = 'inputVersion';
 
@@ -10,7 +10,7 @@ export const PromptMap: Record<PromptMapKey, EnquirerBasePromptOptions> = {
     message: '请输入版本号',
     required: true,
     validate(input) {
-      return verifyVersion(input) || '请输入正确的版本号 ps: 1.0.0';
+      return verifyVersion(input) || '请输入正确的版本号 ps: 1.0.0 | project1.0.0';
     }
   }
 };

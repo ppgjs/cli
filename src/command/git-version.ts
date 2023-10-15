@@ -1,70 +1,14 @@
-import Enquirer from 'enquirer';
+import { getActionType } from '../gitActionCommon/other';
 import {
-  PromptMap,
-  checkBranch,
-  execCommand,
-  exitWithError,
+  backToOriginalBranch,
   gitCheckoutBranch,
+  gitDeleteBranch,
   gitPull,
-  logError,
-  logInfo,
-  mergePromptOptions,
-  terminalLog,
-  verifyVersion
-} from '../shared';
-import { sleep } from '../shared/utils';
-
-class VersionInfo {
-  originBranch: string = ''; // 源分支
-
-  mainBranch: string = ''; // 版本主分支
-
-  versionNumber: string = ''; // 版本号
-
-  projectMainBranch: string = ''; // 项目主分支
-
-  async init() {
-    this.originBranch = await execCommand('git', ['symbolic-ref', '--short', 'HEAD']);
-    logInfo(`当前分支:${this.originBranch}`);
-
-    const version = this.originBranch.split('/')[0];
-    if (verifyVersion(version)) {
-      this.versionNumber = version;
-      this.setMainBranch();
-    }
-    await this.setProjectMainBranch();
-
-    // await checkWorkingNoCommit();
-  }
-
-  setMainBranch() {
-    this.mainBranch = `${this.versionNumber}/main`;
-  }
-
-  async setVersionNumber() {
-    const { version } = await Enquirer.prompt<{ version: string }>([
-      mergePromptOptions(PromptMap.inputVersion, { default: this.versionNumber })
-    ]);
-    console.log('40行 - git-version.ts  => ', version);
-    this.versionNumber = version;
-    logInfo(`当前版本:${this.versionNumber}`);
-    this.setMainBranch();
-    logInfo(`当前版本主分支:${this.mainBranch}`);
-  }
-
-  async setProjectMainBranch() {
-    const [master, main] = await Promise.all([checkBranch('master'), checkBranch('main')]);
-    if (master.remoteExist) this.projectMainBranch = `master`;
-    else if (main.remoteExist) this.projectMainBranch = `main`;
-    else {
-      logError(`当前项目缺少主分支:${this.mainBranch}`);
-      await exitWithError();
-    }
-    console.log('59行 - git-version.ts  => ', this.projectMainBranch);
-  }
-}
-
-const versionInfo = new VersionInfo();
+  verifyMergeStatus,
+  versionInfo
+} from '../gitActionCommon';
+import { execCommand, exitWithError, exitWithSuccess, logError, logInfo, logWarn, terminalLog } from '../shared';
+import { EGitVersionActionType } from '../types';
 
 async function checkInvalidBranch() {
   if (versionInfo.originBranch === 'master' || versionInfo.originBranch.endsWith('/main')) {
@@ -72,16 +16,6 @@ async function checkInvalidBranch() {
     return exitWithError();
   }
   return true;
-}
-export async function getVersion() {
-  await versionInfo.init();
-  await checkInvalidBranch();
-  await versionInfo.setVersionNumber();
-
-  // await gitPullMainNewCode();
-  await mergeAToB(versionInfo.projectMainBranch, versionInfo.originBranch);
-
-  // await backToOriginalBranch();
 }
 
 // 拉取master最新代码
@@ -92,35 +26,43 @@ async function gitPullMainNewCode() {
 }
 
 async function mergeAToB(A: string, B: string) {
-  terminalLog.start('开始合并');
-  // await sleep(6000);
-  // terminalLog.SuccessEnd('合并成功');
-  // console.log('90行 - git-version.ts  => ', A, B);
-  // await gitCheckoutBranch(B);
-  // try {
-  //   const res = await execCommand('git', ['merge', A, '--no-edit']);
-  //   console.log('🚀 ~ file: git-version.ts:92 ~ res:', res);
-  // } catch (error) {
-  //   console.log('🚀 ~ file: git-version.ts:100 ~ error:', error);
-  // }
+  logWarn(`合并分支:${A} to ${B}`);
+  await gitCheckoutBranch(B);
+  try {
+    const res = await execCommand('git', ['merge', A, '--no-edit']);
+    console.log('🚀 ~ file: git-version.ts:92 ~ res:', res);
+    logWarn(`合并分支:${A} to ${B}`);
+    terminalLog.SuccessEnd(`合并分支:${A} to ${B} 合并成功`);
+  } catch (error) {
+    terminalLog.start('等待解决合并冲突');
+    await verifyMergeStatus();
+    terminalLog.SuccessEnd(`合并分支:${A} to ${B} 合并完成`);
+  }
+  await gitPull();
 }
 
-async function backToOriginalBranch() {
-  await gitCheckoutBranch(versionInfo.originBranch);
-}
+const mergeEnter = async () => {
+  await checkInvalidBranch();
+  await versionInfo.setVersionNumber();
 
-/* function tryToReadVersion() {
-  tryParseVersionFromBranch
-  if [[$(echo "${version}" | grep - n "^.*[0-9]\{1,4\}\.[0-9]\{1,4\}\.[0-9]\{1,4\}$") == ""]]; then
-  read - p "请输入版本号: " version
-  else
-  read - p "请输入版本号（如是版本'${version}'，可直接回车）: " version
-  fi
-  if [["${version}" == ""]]; then
-  tryParseVersionFromBranch
-  fi
-  while [[$(echo "${version}" | grep - n "^.*[0-9]\{1,4\}\.[0-9]\{1,4\}\.[0-9]\{1,4\}$") == ""]]; do
-    read - p "请输入正确的版本号（如：1.0.0）: " version
-  done
+  await gitPullMainNewCode();
+  await mergeAToB(versionInfo.projectMainBranch, versionInfo.originBranch);
+  await mergeAToB(versionInfo.originBranch, versionInfo.versionMainBranch);
+  await backToOriginalBranch();
+  await gitDeleteBranch(versionInfo.versionMainBranch);
+  await exitWithSuccess();
+};
+
+// 入口函数
+export async function getVersion(defaultType?: EGitVersionActionType) {
+  // await versionInfo.init();
+  const actionType = await getActionType(defaultType);
+  switch (actionType) {
+    case EGitVersionActionType.merge:
+      await mergeEnter();
+      break;
+
+    default:
+      logError(`没有任何脚本可执行 ${actionType}`);
+  }
 }
- */

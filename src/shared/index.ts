@@ -1,5 +1,5 @@
 export * from './exec';
-export * from './gitUtils';
 export * from './log';
 export * from './prompt';
-export * from './terminalLog';
+export * from './terminal-log';
+export * from './utils';
