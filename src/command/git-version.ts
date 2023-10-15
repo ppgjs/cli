@@ -37,16 +37,30 @@ const newEntrance = async () => {
 // check 入口
 const checkEntrance = async () => {
   await versionInfo.setVersionNumber();
-
   await checkOriginMainBranchExist();
-
   await gitCheckoutBranch(versionInfo.versionMainBranch);
-
   logWarn('准备检测...');
-
   await checkVersionMainBranchHasNotMerged();
-
   logSuccess(`检测完成,${versionInfo.versionNumber} 版本的分支全部已合并到主分支`);
+};
+
+// build 入口
+const buildEntrance = async () => {
+  console.log('Todo:打包');
+};
+
+// publish 入口
+const publishEntrance = async () => {
+  console.log('Todo:发布');
+};
+
+// fix 入口
+const fixEntrance = async () => {
+  console.log('Todo:修复');
+};
+// move 入口
+const moveEntrance = async () => {
+  console.log('Todo:移动');
 };
 
 // 入口函数
@@ -65,6 +79,22 @@ export async function getVersion(defaultType?: EGitVersionActionType) {
 
     case EGitVersionActionType.check:
       await checkEntrance();
+      break;
+
+    case EGitVersionActionType.build:
+      await buildEntrance();
+      break;
+
+    case EGitVersionActionType.publish:
+      await publishEntrance();
+      break;
+
+    case EGitVersionActionType.fix:
+      await fixEntrance();
+      break;
+
+    case EGitVersionActionType.move:
+      await moveEntrance();
       break;
 
     default:

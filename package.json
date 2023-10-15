@@ -1,13 +1,13 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "一个好用的cli",
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
     "build-pkg": "pnpm -r --filter='./packages/*' run build",
     "stub": "pnpm -r run stub",
-    "lint": "eslint . --fix",
+    "lint": "eslint --fix -c .eslintrc --ext .ts ./",
     "format": "soy prettier-write",
     "commit": "soy git-commit",
     "cleanup": "soy cleanup",
@@ -41,7 +41,7 @@
     "@ppgjs/cli": "link:",
     "@types/node": "^20.8.3",
     "eslint": "^8.51.0",
-    "eslint-config-soybeanjs": "^0.5.6",
+    "eslint-config-soybeanjs": "^0.5.7",
     "tsx": "^3.13.0",
     "typescript": "^5.2.2",
     "unbuild": "^2.0.0"

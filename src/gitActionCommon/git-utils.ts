@@ -251,8 +251,7 @@ function checkBranchIsVersionFuncBranch(branch: string) {
 export async function checkVersionMainBranchHasNotMerged() {
   await checkOriginMainBranchExist();
   await gitCheckoutBranch(versionInfo.versionMainBranch);
-
-  gitPull();
+  await gitPull();
   const noMergeResult = await execCommand('git', ['branch', '-a', '--no-merged']);
   const noMergeBranchArr = noMergeResult.split(RegResultSplitToArr);
 
