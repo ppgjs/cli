@@ -44,7 +44,7 @@ async function setupCli() {
       }
     },
     'git-version [actionType]': {
-      desc: '分支操作流程',
+      desc: '版本分支操作',
       alias: 'gv',
       action: async actionType => {
         try {

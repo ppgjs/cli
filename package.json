@@ -1,6 +1,6 @@
 {
-  "name": "boyce-pan-cli",
-  "version": "0.0.20",
+  "name": "@ppg/cli",
+  "version": "0.0.1",
   "description": "一个好用的cli",
   "scripts": {
     "build": "unbuild",
@@ -18,7 +18,7 @@
     "test": "node dist/index.cjs --help"
   },
   "bin": {
-    "pz": "dist/index.cjs"
+    "ppg": "dist/index.cjs"
   },
   "type": "module",
   "exports": {
