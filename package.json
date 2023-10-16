@@ -1,6 +1,6 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "一个好用的cli",
   "scripts": {
     "build": "unbuild",
@@ -39,6 +39,7 @@
   "license": "ISC",
   "devDependencies": {
     "@ppgjs/cli": "link:",
+    "@types/ejs": "^3.1.3",
     "@types/node": "^20.8.3",
     "eslint": "^8.51.0",
     "eslint-config-soybeanjs": "^0.5.7",
@@ -51,11 +52,14 @@
     "c12": "^1.4.2",
     "cac": "^6.7.14",
     "cli-spinners": "^2.9.1",
+    "ejs": "^3.1.9",
     "enquirer": "^2.4.1",
     "execa": "^8.0.1",
+    "fast-glob": "^3.3.1",
     "kolorist": "^1.8.0",
     "log-update": "^5.0.1",
     "open": "^9.1.0",
-    "ora": "^7.0.1"
+    "ora": "^7.0.1",
+    "pkg-types": "^1.0.3"
   }
 }

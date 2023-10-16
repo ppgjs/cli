@@ -29,7 +29,7 @@ async function setupCli() {
 
   const cli = cac('ppg');
 
-  cli.version(version).option('--total', 'Generate changelog by total tags').help();
+  cli.version(version).help();
 
   const commands: CommandWithAction<CommandArg> = {
     'git-commit': {

@@ -1,8 +1,8 @@
 import Enquirer from 'enquirer';
-import { GitInfo } from '../config';
-import { execCommand, exitWithError, logError, logSuccess, logWarn, sleep, terminalLog } from '../shared';
-import { versionInfo } from './version-info';
 import * as kolorist from 'kolorist';
+import { GitInfo } from '../config';
+import { execCommand, exitWithError, logError, logInfo, logSuccess, sleep, terminalLog } from '../shared';
+import { versionInfo } from './version-info';
 
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
 
@@ -13,12 +13,12 @@ export function backToOriginalBranch() {
 
 // 合并分支 A分支 合并到 B分支
 export async function mergeAToB(A: string, B: string) {
-  logWarn(`合并分支:${A} to ${B}`);
+  logInfo(`合并分支:${A} to ${B}`);
   await gitCheckoutBranch(B);
   try {
     const res = await execCommand('git', ['merge', A, '--no-edit']);
     console.log('🚀 ~ file: git-version.ts:92 ~ res:', res);
-    logWarn(`合并分支:${A} to ${B}`);
+    logInfo(`合并分支:${A} to ${B}`);
     terminalLog.SuccessEnd(`合并分支:${A} to ${B} 合并成功`);
   } catch (error) {
     terminalLog.start('等待解决合并冲突');
@@ -36,7 +36,11 @@ export async function gitPullMainNewCode() {
 
 // 检测当前分支是否支持执行脚本
 export async function checkInvalidBranch() {
-  if (versionInfo.originBranch === 'master' || versionInfo.originBranch.endsWith('/main')) {
+  if (
+    versionInfo.originBranch === 'master' ||
+    versionInfo.originBranch === 'main' ||
+    versionInfo.originBranch.endsWith('/main')
+  ) {
     logError(`当前分支 ${versionInfo.originBranch} 错误，不能进行合并操作`);
     return exitWithError();
   }
@@ -192,7 +196,7 @@ export async function readFunc() {
     });
     versionInfo.setFuncName(inputFuncName.trim());
   }
-  logWarn(`当前功能:${versionInfo.funcName}`);
+  logInfo(`当前功能:${versionInfo.funcName}`);
 }
 
 // 检查功能分支是否存在
@@ -237,6 +241,14 @@ export async function checkOriginMainBranchExist() {
   return true;
 }
 
+// 检测分支是否是该项目主分支
+export function checkBranchIsProjectMainBranch(branch: string) {
+  return (
+    branch === versionInfo.projectMainBranch ||
+    branch === `remotes/${GitInfo.useRemote}/${versionInfo.projectMainBranch}`
+  );
+}
+
 // 检测分支是否是该版本分支
 function checkBranchIsVersionFuncBranch(branch: string) {
   if (
@@ -258,17 +270,13 @@ export async function checkVersionMainBranchHasNotMerged() {
   try {
     const versionFuncNoMergeArr: string[] = [];
     noMergeBranchArr.forEach((branch: string) => {
-      if (
-        branch === versionInfo.projectMainBranch ||
-        branch === `remotes/${GitInfo.useRemote}/${versionInfo.projectMainBranch}` ||
-        checkBranchIsVersionFuncBranch(branch)
-      ) {
+      if (checkBranchIsProjectMainBranch(branch) || checkBranchIsVersionFuncBranch(branch)) {
         const localBranch = branch.replace(`remotes/${GitInfo.useRemote}/`, '');
         if (!versionFuncNoMergeArr.includes(localBranch)) versionFuncNoMergeArr.push(localBranch);
       }
     });
     if (versionFuncNoMergeArr.length) {
-      throw new Error(`分支 [${kolorist.green(versionFuncNoMergeArr.join('，'))}] 还没合并，请先合并后再发布`);
+      throw new Error(`分支 [${kolorist.green(versionFuncNoMergeArr.join('，'))}] 还没合并，请先合并后再 发布/打包`);
     }
   } catch (error: any) {
     logError(error);

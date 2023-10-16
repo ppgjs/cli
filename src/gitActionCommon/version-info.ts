@@ -3,14 +3,17 @@ import {
   PromptMap,
   execCommand,
   exitWithError,
+  getPackageJsonAttr,
   logError,
-  logInfo,
+  logWarn,
   mergePromptOptions,
   watchProcessAccident
 } from '../shared';
-import { backToOriginalBranch, checkBranch, verifyVersion } from './git-utils';
+import { backToOriginalBranch, checkBranch, checkWorkingNoCommit, verifyVersion } from './git-utils';
 
 export class VersionInfo {
+  projectName = ''; // 项目名称
+
   originBranch: string = ''; // 源分支
 
   versionMainBranch: string = ''; // 版本主分支
@@ -22,13 +25,15 @@ export class VersionInfo {
   funcName: string = ''; // 功能分支名称(不包含版本号)
 
   async init() {
+    await this.getProjectName();
     this.originBranch = await execCommand('git', ['symbolic-ref', '--short', 'HEAD']);
+    logWarn(`当前分支:${this.originBranch}`);
     const version = this.originBranch.split('/')[0];
     if (verifyVersion(version)) {
       this.versionNumber = version;
       this.setMainBranch();
     }
-    await this.setProjectMainBranch();
+    await Promise.all([this.setProjectMainBranch()]);
     // await checkWorkingNoCommit();
     // 监听程序中断意外退出
     watchProcessAccident(backToOriginalBranch);
@@ -43,9 +48,9 @@ export class VersionInfo {
       mergePromptOptions(PromptMap.inputVersion, { default: this.versionNumber })
     ]);
     this.versionNumber = version;
-    logInfo(`当前版本:${this.versionNumber}`);
+    logWarn(`当前版本:${this.versionNumber}`);
     this.setMainBranch();
-    logInfo(`当前版本主分支:${this.versionMainBranch}`);
+    logWarn(`当前版本主分支:${this.versionMainBranch}`);
   }
 
   async setProjectMainBranch() {
@@ -62,12 +67,21 @@ export class VersionInfo {
     this.funcName = funcName;
   }
 
+  // 获取完整功能分支名称 版本号/功能名
   async getFuncFullName() {
     if (!this.funcName) {
       logError('抱歉没有找到功能分支');
       await exitWithError();
     }
     return `${this.versionNumber}/${this.funcName}`;
+  }
+
+  async getProjectName() {
+    const options = await getPackageJsonAttr({ packageJson: ['name'] });
+    if (options && options.name) {
+      this.projectName = options.name;
+      logWarn(`当前项目名称:${options.name}`);
+    }
   }
 }
 export const versionInfo = new VersionInfo();

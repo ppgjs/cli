@@ -21,5 +21,8 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "j69.ejs-beautify"
   }
 }

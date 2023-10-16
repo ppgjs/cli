@@ -1,0 +1,12 @@
+// template/index.ejs
+const Koa = require("koa");
+
+<% if (middleware.router) { %>
+const Router = require("koa-router");
+<% } %>
+
+……
+
+app.listen(<%= port %>, () => {
+console.log("open server localhost:<%= port %>");
+});

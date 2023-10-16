@@ -11,8 +11,8 @@ import {
   mergeAToB,
   versionInfo
 } from '../gitActionCommon';
-import { getActionType } from '../gitActionCommon/other';
-import { exitWithSuccess, logError, logSuccess, logWarn } from '../shared';
+import { getActionType, openUpdateMdFile } from '../gitActionCommon/other';
+import { exitWithSuccess, logError, logHint, logSuccess, logWarn } from '../shared';
 import { EGitVersionActionType } from '../types';
 
 // merge 入口
@@ -38,15 +38,20 @@ const newEntrance = async () => {
 const checkEntrance = async () => {
   await versionInfo.setVersionNumber();
   await checkOriginMainBranchExist();
-  await gitCheckoutBranch(versionInfo.versionMainBranch);
   logWarn('准备检测...');
   await checkVersionMainBranchHasNotMerged();
   logSuccess(`检测完成,${versionInfo.versionNumber} 版本的分支全部已合并到主分支`);
+  await backToOriginalBranch();
 };
 
-// build 入口
+// build 入口nest
 const buildEntrance = async () => {
-  console.log('Todo:打包');
+  // await versionInfo.setVersionNumber();
+  // await checkOriginMainBranchExist();
+  // await mergeAToB(versionInfo.versionMainBranch, versionInfo.projectMainBranch);
+  // await checkVersionMainBranchHasNotMerged();
+  // logHint('准备打包...');
+  await openUpdateMdFile();
 };
 
 // publish 入口

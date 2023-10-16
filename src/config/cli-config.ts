@@ -2,6 +2,7 @@ import type { CliOption } from '../index';
 const eslintExt = '*.{js,jsx,mjs,cjs,json,ts,tsx,mts,cts,vue,svelte,astro}';
 
 import { loadConfig } from 'c12';
+import { getPackageJsonAttr } from '../shared';
 
 const defaultOptions: CliOption = {
   cwd: process.cwd(),
@@ -11,8 +12,7 @@ const defaultOptions: CliOption = {
     '**/yarn.lock',
     '**/pnpm-lock.yaml',
     '**/node_modules',
-    // eslint-disable-next-line prettier/prettier
-    '!node_modules/**',
+    '!node_modules/**'
   ],
   gitCommitTypes: [
     ['init', '项目初始化'],
@@ -64,14 +64,19 @@ const defaultOptions: CliOption = {
     '*': 'soy prettier-write'
   }
 };
-
 export async function loadCliOptions(overrides?: Partial<CliOption>, cwd = process.cwd()) {
-  const { config } = await loadConfig({
+  const options = {
     overrides,
     name: 'ppg',
     defaults: defaultOptions,
     cwd,
-    packageJson: true
-  });
+    packageJson: ['name']
+  };
+  const { config: c12Config } = await loadConfig(options);
+
+  const pkgJson = await getPackageJsonAttr(options);
+
+  const config = Object.assign(c12Config || {}, pkgJson);
+
   return config as CliOption;
 }

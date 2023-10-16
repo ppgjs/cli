@@ -8,7 +8,6 @@ export async function gitCommitVerify() {
 
   const gitMsgPath = path.join(gitPath, '.git', 'COMMIT_EDITMSG');
 
-  console.log('9行 - git-verify.ts  => ', gitMsgPath);
   const commitMsg = readFileSync(gitMsgPath, { encoding: 'utf8' });
   const REG_EXP = /(?<type>[a-z]+)(\((?<scope>[a-z]+)\))?(?<breaking>!)?:(?<description>.+)/i;
   if (!REG_EXP.test(commitMsg)) {

@@ -1,5 +1,7 @@
+import type { LoadConfigOptions } from 'c12';
 import { execCommand } from './exec';
 import { logError, logSuccess } from './log';
+import { readPackageJSON } from 'pkg-types';
 
 /**
  * @description: 睡眠
@@ -75,3 +77,26 @@ export function watchProcessAccident(callback: () => void, autoAccidentExitCallF
     process.exit(0); // 退出程序
   });
 }
+
+// 修复c12中packageJson的问题
+export const getPackageJsonAttr = async (options: LoadConfigOptions) => {
+  const pkgJson: Record<string, any> = {};
+  if (options.packageJson) {
+    const keys = (
+      Array.isArray(options.packageJson)
+        ? options.packageJson
+        : [typeof options.packageJson === 'string' ? options.packageJson : options.name]
+    ).filter(t => t && typeof t === 'string') as string[];
+    const pkgJsonFile = await readPackageJSON(options.cwd).catch(e => {
+      console.warn('read package.json error => ', e);
+    });
+    if (pkgJsonFile) {
+      const values: Record<string, any> = {};
+      keys.forEach((key: string) => {
+        if (values[key]) values[key] = pkgJsonFile[key];
+      });
+      Object.assign(pkgJson, values);
+    }
+  }
+  return pkgJson;
+};
