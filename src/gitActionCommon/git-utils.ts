@@ -84,7 +84,7 @@ export async function gitPush(showMessage = true, branch = '') {
   const result = await execCommand('git', ['push', '-u', GitInfo.useRemote, pushUseBranch]);
 
   if (showMessage) {
-    logSuccess(`推送分支 ${pushUseBranch} 到 远程${GitInfo.useRemote}`);
+    logSuccess(`推送分支 ${pushUseBranch} 到 远程 ${GitInfo.useRemote}`);
   }
   return result;
 }
@@ -161,8 +161,8 @@ export async function deleteLocalVersionOriginMain() {
 }
 
 export async function checkVersionMainBranch() {
-  const pushMain = async () => {
-    await gitPush(true, versionInfo.versionMainBranch);
+  const pushMain = async (showMessage = true) => {
+    await gitPush(showMessage, versionInfo.versionMainBranch);
     await deleteLocalVersionOriginMain();
   };
 
@@ -176,7 +176,7 @@ export async function checkVersionMainBranch() {
 
   await gitPullMainNewCode();
   await execCommand('git', ['branch', versionInfo.versionMainBranch]);
-  await pushMain();
+  await pushMain(false);
   logSuccess(`创建版本主分支 ${versionInfo.versionMainBranch}，并推送到远程`);
 }
 
@@ -231,7 +231,7 @@ export async function createBranchFromProjectMainBranch() {
 
   const funcBranch = await versionInfo.getFuncFullName();
   await execCommand('git', ['checkout', '-b', funcBranch]);
-  logSuccess(`${funcBranch} 功能分创建完成`);
+  logSuccess(`${funcBranch} 功能分支创建完成`);
 }
 
 export async function checkOriginMainBranchExist() {

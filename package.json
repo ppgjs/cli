@@ -1,6 +1,6 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "一个好用的cli",
   "scripts": {
     "build": "unbuild",
