@@ -1,7 +1,29 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.6",
-  "description": "一个好用的cli",
+  "version": "0.0.7",
+  "description": "PpgJs's command line tools",
+  "author": {
+    "name": "BoycePan",
+    "email": "pz886688@163.com",
+    "url": "https://github.com/ppgjs"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ppgjs/cli",
+  "repository": {
+    "url": "https://github.com/ppgjs/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ppgjs/cli/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "cli",
+    "node",
+    "ppgjs",
+    "ppg"
+  ],
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
@@ -34,9 +56,6 @@
   "files": [
     "dist"
   ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@ppgjs/cli": "link:",
     "@types/ejs": "^3.1.3",
