@@ -1,7 +1,6 @@
 import type { LoadConfigOptions } from 'c12';
-import { execCommand } from './exec';
-import { logError, logSuccess } from './log';
 import { readPackageJSON } from 'pkg-types';
+import { logError, logSuccess } from './log';
 
 /**
  * @description: 睡眠
@@ -14,15 +13,6 @@ export const sleep = (delay = 1000) => {
       res('睡眠完成');
     }, delay);
   });
-};
-
-/**
- * @description: 浏览器打开网页
- * @param {number} delay
- * @return {Promise} 时间完成之后的
- */
-export const openBrowserUrl = (url: string) => {
-  return execCommand('start', [url]);
 };
 
 // 执行成功退出进程
@@ -93,7 +83,7 @@ export const getPackageJsonAttr = async (options: LoadConfigOptions) => {
     if (pkgJsonFile) {
       const values: Record<string, any> = {};
       keys.forEach((key: string) => {
-        if (values[key]) values[key] = pkgJsonFile[key];
+        if (pkgJsonFile[key]) values[key] = pkgJsonFile[key];
       });
       Object.assign(pkgJson, values);
     }

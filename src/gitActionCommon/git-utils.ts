@@ -1,10 +1,12 @@
 import Enquirer from 'enquirer';
 import * as kolorist from 'kolorist';
 import { GitInfo } from '../config';
-import { execCommand, exitWithError, logError, logInfo, logSuccess, sleep, terminalLog } from '../shared';
+import { execCommand, exitWithError, gitProject, logError, logInfo, logSuccess, sleep, terminalLog } from '../shared';
 import { versionInfo } from './version-info';
 
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
+import { chooseBuildEnv, chooseIsBuild, chooseOfficialBuildProject } from './other';
+import { openUpdateMdFile } from './update-md';
 
 // 退回到原分支
 export function backToOriginalBranch() {
@@ -25,7 +27,7 @@ export async function mergeAToB(A: string, B: string) {
     await verifyMergeStatus();
     terminalLog.SuccessEnd(`合并分支:${A} to ${B} 合并完成`);
   }
-  await gitPull();
+  await gitPush();
 }
 
 // 拉取master最新代码
@@ -153,7 +155,7 @@ export async function checkBranch(branch: string) {
 }
 
 // 删除本地版本主分支
-async function deleteLocalVersionOriginMain() {
+export async function deleteLocalVersionOriginMain() {
   await gitDeleteBranch(versionInfo.versionMainBranch, { showLog: false });
   return true;
 }
@@ -261,7 +263,6 @@ function checkBranchIsVersionFuncBranch(branch: string) {
 
 // 检测是否有该版本的功能分支未合并到主分支
 export async function checkVersionMainBranchHasNotMerged() {
-  await checkOriginMainBranchExist();
   await gitCheckoutBranch(versionInfo.versionMainBranch);
   await gitPull();
   const noMergeResult = await execCommand('git', ['branch', '-a', '--no-merged']);
@@ -287,5 +288,75 @@ export async function checkVersionMainBranchHasNotMerged() {
     }
 
     await exitWithError();
+  }
+}
+
+// 处理打包
+export async function startBuild(defaultIsBuild = true) {
+  const isBuild = await chooseIsBuild(defaultIsBuild);
+  if (isBuild) {
+    logInfo('开始打包...');
+    try {
+      await execCommand('npm', ['run', 'build'], {
+        stdio: 'inherit'
+      });
+      logSuccess('编译完成!');
+    } catch (error) {
+      logError('编译失败!');
+    }
+  }
+}
+
+// 普通的打包
+async function handleBuildNormal() {
+  await openUpdateMdFile();
+  await startBuild();
+}
+// 综合运营系统的打包
+async function handleBuildOperatorTs() {
+  await openUpdateMdFile();
+  const buildEnv = await chooseBuildEnv();
+  switch (buildEnv) {
+    case 'dev':
+      await mergeAToB(versionInfo.versionMainBranch, 'dev');
+      await startBuild();
+      await gitProject.add('./');
+      await gitProject.commit('build dist');
+      await gitPush();
+      console.log(kolorist.bgLightRed('接下来干这事：'));
+      console.log(kolorist.bgLightRed('    钉钉@cyc，cyc会打包部署到dev环境'));
+      break;
+    case 'test':
+      await startBuild();
+      console.log(kolorist.bgLightRed('接下来干这事：'));
+      console.log(kolorist.bgLightRed('    自己不行就呼叫测试或者后端同学构建部署该分支，即可在test环境进行测试'));
+      break;
+    case 'prod':
+      console.log(kolorist.bgLightRed('接下来干这事：'));
+      console.log(kolorist.bgLightRed('    钉钉@cyc，告诉他升级的分支，cyc会打包部署到prod环境'));
+      break;
+    default:
+      logError(`Error:${buildEnv}`);
+  }
+}
+// 开放平台的打包
+async function handleBuildOfficialTs() {
+  const selectProject = await chooseOfficialBuildProject();
+  await execCommand('npm', ['run', `build:${selectProject}`], { stdio: 'inherit' });
+  console.log(kolorist.bgLightRed('接下来干这事：'));
+  console.log(kolorist.bgLightRed('    钉钉@cyc，将打包文件发给他'));
+}
+
+// 不同项目的打包特殊处理
+export async function handleMoreProjectBuild() {
+  switch (versionInfo.projectName) {
+    case 'operator-ts':
+      await handleBuildOperatorTs();
+      break;
+    case 'official-ts':
+      await handleBuildOfficialTs();
+      break;
+    default:
+      await handleBuildNormal();
   }
 }

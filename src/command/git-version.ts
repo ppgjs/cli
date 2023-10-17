@@ -5,14 +5,16 @@ import {
   checkVersionMainBranch,
   checkVersionMainBranchHasNotMerged,
   createBranchFromProjectMainBranch,
-  gitCheckoutBranch,
+  deleteLocalVersionOriginMain,
   gitDeleteBranch,
+  gitGetCurrentBranch,
   gitPullMainNewCode,
+  handleMoreProjectBuild,
   mergeAToB,
   versionInfo
 } from '../gitActionCommon';
-import { getActionType, openUpdateMdFile } from '../gitActionCommon/other';
-import { exitWithSuccess, logError, logHint, logSuccess, logWarn } from '../shared';
+import { chooseActionType } from '../gitActionCommon/other';
+import { exitWithSuccess, logError, logSuccess, logWarn } from '../shared';
 import { EGitVersionActionType } from '../types';
 
 // merge 入口
@@ -44,14 +46,19 @@ const checkEntrance = async () => {
   await backToOriginalBranch();
 };
 
-// build 入口nest
+// build 入口
 const buildEntrance = async () => {
-  // await versionInfo.setVersionNumber();
-  // await checkOriginMainBranchExist();
-  // await mergeAToB(versionInfo.versionMainBranch, versionInfo.projectMainBranch);
-  // await checkVersionMainBranchHasNotMerged();
-  // logHint('准备打包...');
-  await openUpdateMdFile();
+  await versionInfo.setVersionNumber();
+  await checkOriginMainBranchExist();
+  await mergeAToB(versionInfo.versionMainBranch, versionInfo.projectMainBranch);
+  await checkVersionMainBranchHasNotMerged();
+
+  await handleMoreProjectBuild();
+
+  if (versionInfo.originBranch !== (await gitGetCurrentBranch())) {
+    await backToOriginalBranch();
+    await deleteLocalVersionOriginMain();
+  }
 };
 
 // publish 入口
@@ -71,7 +78,7 @@ const moveEntrance = async () => {
 // 入口函数
 export async function getVersion(defaultType?: EGitVersionActionType) {
   await versionInfo.init();
-  const actionType = await getActionType(defaultType);
+  const actionType = await chooseActionType(defaultType);
 
   switch (actionType) {
     case EGitVersionActionType.merge:

@@ -1,6 +1,6 @@
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { logError } from './log';
-import { readFileSync } from 'fs';
 
 const getRootPath = () => {
   const pathArr = __dirname.split(/(\\|\/)/);
@@ -14,21 +14,17 @@ const getRootPath = () => {
  * @return {*}
  */
 export const readStaticFile = (filePath = '') => {
-  console.log('17行 - template.ts  => ', __dirname);
   const rootPath = getRootPath();
-  console.log('🚀 ~ file: template.ts:19 ~ rootPath:', rootPath);
   const path = join(rootPath, './static/', filePath);
-  console.log('🚀 ~ file: template.ts:20 ~ path:', path);
   try {
     const file = readFileSync(path);
     return file.toString();
   } catch (error) {
     logError(`Error:文件不存在${path}`);
-    console.log('25行 - template.ts  => ', error);
   }
   return false;
 };
 
-export const readStaticTemplateFile = (templateFileName = '') => {
+export const readStaticTemplateFileSync = (templateFileName = '') => {
   return readStaticFile(join('./template', templateFileName));
 };

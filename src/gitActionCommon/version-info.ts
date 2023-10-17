@@ -34,7 +34,7 @@ export class VersionInfo {
       this.setMainBranch();
     }
     await Promise.all([this.setProjectMainBranch()]);
-    // await checkWorkingNoCommit();
+    await checkWorkingNoCommit();
     // 监听程序中断意外退出
     watchProcessAccident(backToOriginalBranch);
   }

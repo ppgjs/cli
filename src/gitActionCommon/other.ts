@@ -1,12 +1,8 @@
 import Enquirer from 'enquirer';
-import glob from 'fast-glob';
-import { resolve } from 'path';
-import { execCommand } from '../shared';
 import { EGitVersionActionType, actionDescription } from '../types';
-import { createIndexTemplate } from './createIndexTemplate';
 
 // 获取操作类型
-export const getActionType = async (defaultType?: EGitVersionActionType) => {
+export const chooseActionType = async (defaultType?: EGitVersionActionType) => {
   let actionType: EGitVersionActionType | undefined;
 
   if (defaultType) {
@@ -34,22 +30,44 @@ export const getActionType = async (defaultType?: EGitVersionActionType) => {
   return actionType;
 };
 
-// export function createUpdateMdFile() {}
-export async function openUpdateMdFile() {
-  try {
-    const system = await execCommand('uname');
-    const files = await glob(['*/**/doc/update.md'], { ignore: ['**/node_modules/**'] });
-    if (files.length) {
-      const fullFile = resolve(files[0]);
-      if (system.includes('Darwin')) {
-        await execCommand('open', [fullFile]);
-      } else {
-        await execCommand('start', [fullFile]);
-      }
-      // await logInfo(`打开 ${versionInfo.versionNumber} 版本升级步骤文档`);
-      createIndexTemplate();
+// 是否打包
+export const chooseIsBuild = async (defaultIsBuild = true) => {
+  const { isBuild } = await Enquirer.prompt<{ isBuild: boolean }>([
+    {
+      name: 'isBuild',
+      type: 'confirm',
+      initial: defaultIsBuild,
+      message: '是否需要编译'
     }
-  } catch (error) {
-    console.log('openUpdateMdFile Error:', error);
-  }
-}
+  ]);
+  return isBuild;
+};
+
+export const chooseBuildEnv = async () => {
+  const { env } = await Enquirer.prompt<{ env: 'dev' | 'test' | 'prod' }>([
+    {
+      name: 'env',
+      type: 'select',
+      message: '请选择操作类型',
+      choices: [
+        { name: 'dev', message: `${'dev'.padEnd(8)}开发环境` },
+        { name: 'test', message: `${'test'.padEnd(8)}测试环境` },
+        { name: 'prod', message: `${'prod'.padEnd(8)}生产环境` }
+      ]
+    }
+  ]);
+  return env;
+};
+
+// 仅用于开放平台打包
+export const chooseOfficialBuildProject = async () => {
+  const { project } = await Enquirer.prompt<{ project: string }>([
+    {
+      name: 'project',
+      type: 'select',
+      message: '请选择要打包的项目',
+      choices: [{ name: 'open' }, { name: 'index' }]
+    }
+  ]);
+  return project;
+};
