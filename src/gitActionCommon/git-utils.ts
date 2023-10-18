@@ -231,6 +231,7 @@ export async function createBranchFromProjectMainBranch() {
 
   const funcBranch = await versionInfo.getFuncFullName();
   await execCommand('git', ['checkout', '-b', funcBranch]);
+  await gitPush();
   logSuccess(`${funcBranch} 功能分支创建完成`);
 }
 
