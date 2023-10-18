@@ -1,9 +1,9 @@
 import { render } from 'ejs';
 import { glob } from 'fast-glob';
 import { existsSync, writeFileSync } from 'fs-extra';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { format } from 'prettier';
-import { logError, logHint, logInfo, openFile, readStaticTemplateFileSync } from '../shared';
+import { logError, logHint, logInfo, readStaticTemplateFileSync } from '../shared';
 import { versionInfo } from './version-info';
 
 /**
@@ -42,9 +42,10 @@ export async function createUpdateMdFile(replace = true, hint = false) {
  */
 export async function openUpdateMdFile() {
   try {
-    const files = await glob(['*/**/doc/update.md'], { ignore: ['**/node_modules/**'] });
+    const files = await glob(['**/doc/update.md'], { ignore: ['**/node_modules/**'] });
     if (files.length) {
-      openFile(resolve(files[0]));
+      const open = await import('open');
+      open.default(files[0]);
       await logInfo(`打开 ${versionInfo.versionNumber} 版本升级步骤文档`);
       return true;
     }
