@@ -8,9 +8,16 @@ import type { CliOption, EGitVersionActionType } from './types/index';
 import { version } from '../package.json';
 import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './command';
 import { exitWithError } from './shared';
-import { PingPort } from './gitActionCommon';
+import { PingPort as pingPort, deleteTag } from './gitActionCommon';
 
-type CommandName = 'git-commit' | 'open' | 'git-commit-verify' | 'ping [ip]' | 'git-version [actionType]' | 'release';
+type CommandName =
+  | 'git-commit'
+  | 'open'
+  | 'git-commit-verify'
+  | 'ping [ip]'
+  | 'delete-tag [tagName]'
+  | 'git-version [actionType]'
+  | 'release';
 
 type CommandActions<T extends object> = (args: T, options: Record<string, any>) => Promise<void> | void;
 
@@ -69,7 +76,14 @@ async function setupCli() {
       options: [['-m, --more', 'Whether to ping multiple ips', { default: false }]],
       action: async (ip, options) => {
         console.warn('🚀 ~ file: index.ts:71 ~ ip, options:', ip, options);
-        await PingPort(options.more, <string>(<unknown>ip));
+        await pingPort(options.more, <string>(<unknown>ip));
+      }
+    },
+    'delete-tag [tagName]': {
+      desc: '删除远程tag',
+      alias: 'dt',
+      action: async tag => {
+        await deleteTag(<string>(<unknown>tag));
       }
     },
     open: {

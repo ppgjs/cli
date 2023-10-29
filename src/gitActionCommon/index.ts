@@ -1,3 +1,4 @@
+export * from './delete-tag';
 export * from './git-regexp';
 export * from './git-utils';
 export * from './other';
