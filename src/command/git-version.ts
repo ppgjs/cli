@@ -4,18 +4,21 @@ import {
   checkOriginMainBranchExist,
   checkVersionMainBranch,
   checkVersionMainBranchHasNotMerged,
-  createBranchFromProjectMainBranch,
-  deleteLocalVersionOriginMain,
+  createBranchFromProjectFuncBranch,
+  exitHandleCurrentBranch,
   gitDeleteBranch,
-  gitGetCurrentBranch,
   gitPullMainNewCode,
   handleMoreProjectBuild,
   mergeAToB,
+  moveFuncBranch,
+  oldPublish,
+  parseFuncFromBranch,
   versionInfo
 } from '../gitActionCommon';
 import { chooseActionType } from '../gitActionCommon/other';
-import { exitWithSuccess, logError, logSuccess, logWarn } from '../shared';
+import { exitWithSuccess, logError, logInfo, logSuccess, logWarn } from '../shared';
 import { EGitVersionActionType } from '../types';
+import { openStore } from './open-git-store';
 
 // merge 入口
 const mergeEnter = async () => {
@@ -33,7 +36,7 @@ const mergeEnter = async () => {
 const newEntrance = async () => {
   await versionInfo.setVersionNumber();
   await checkVersionMainBranch();
-  await createBranchFromProjectMainBranch();
+  await createBranchFromProjectFuncBranch();
 };
 
 // check 入口
@@ -50,29 +53,47 @@ const checkEntrance = async () => {
 const buildEntrance = async () => {
   await versionInfo.setVersionNumber();
   await checkOriginMainBranchExist();
-  await mergeAToB(versionInfo.versionMainBranch, versionInfo.projectMainBranch);
+  await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
   await checkVersionMainBranchHasNotMerged();
 
   await handleMoreProjectBuild();
 
-  if (versionInfo.originBranch !== (await gitGetCurrentBranch())) {
-    await backToOriginalBranch();
-    await deleteLocalVersionOriginMain();
-  }
+  await exitHandleCurrentBranch();
 };
 
 // publish 入口
 const publishEntrance = async () => {
-  console.log('Todo:发布');
+  await versionInfo.setVersionNumber();
+
+  await checkOriginMainBranchExist();
+
+  await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
+
+  // 新项目中只能在 gitlab 中提交合并
+  const useProjectFile = ['fhd_miniprogram_monorepo'];
+  if (useProjectFile.includes(versionInfo.projectName)) {
+    logError(`在gitlab中提交合并请求，将 ${versionInfo.versionMainBranch} 合并到 ${versionInfo.projectMainBranch}`);
+    await openStore();
+  } else {
+    await oldPublish();
+  }
 };
 
 // fix 入口
 const fixEntrance = async () => {
-  console.log('Todo:修复');
+  await versionInfo.setVersionNumber();
 };
 // move 入口
 const moveEntrance = async () => {
-  console.log('Todo:移动');
+  // await checkInvalidBranch();
+
+  await parseFuncFromBranch();
+
+  await versionInfo.setVersionNumber('请输入迁移的目标版本号');
+
+  await checkVersionMainBranch();
+
+  await moveFuncBranch();
 };
 
 // 入口函数

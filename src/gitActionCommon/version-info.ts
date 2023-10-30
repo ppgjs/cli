@@ -34,7 +34,7 @@ export class VersionInfo {
       this.setMainBranch();
     }
     await Promise.all([this.setProjectMainBranch()]);
-    await checkWorkingNoCommit();
+    // await checkWorkingNoCommit();
     // 监听程序中断意外退出
     watchProcessAccident(backToOriginalBranch);
   }
@@ -43,9 +43,9 @@ export class VersionInfo {
     this.versionMainBranch = `${this.versionNumber}/main`;
   }
 
-  async setVersionNumber() {
+  async setVersionNumber(message?: string) {
     const { version } = await Enquirer.prompt<{ version: string }>([
-      mergePromptOptions(PromptMap.inputVersion, { default: this.versionNumber })
+      mergePromptOptions(PromptMap.inputVersion, JSON.parse(JSON.stringify({ default: this.versionNumber, message })))
     ]);
     this.versionNumber = version;
     logWarn(`当前版本:${this.versionNumber}`);

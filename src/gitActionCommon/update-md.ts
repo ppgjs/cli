@@ -1,9 +1,9 @@
 import { render } from 'ejs';
 import { glob } from 'fast-glob';
-import { existsSync, writeFileSync } from 'fs-extra';
-import { join } from 'path';
+import { copyFileSync, existsSync, writeFileSync } from 'fs-extra';
+import { join, resolve } from 'path';
 import { format } from 'prettier';
-import { logError, logHint, logInfo, readStaticTemplateFileSync } from '../shared';
+import { createMkdir, execCommand, logError, logHint, logInfo, readStaticTemplateFileSync } from '../shared';
 import { versionInfo } from './version-info';
 
 /**
@@ -12,7 +12,7 @@ import { versionInfo } from './version-info';
  * @param {*} hint 是否替换失败警告信息
  * @return {*}
  */
-export async function createUpdateMdFile(replace = true, hint = false) {
+export async function createUpdateMdFile(replace = true, hint = false, version = '') {
   const updateMdPath = join(process.cwd(), 'doc', 'update.md');
   if (!replace) {
     const updateMdExist = existsSync(updateMdPath);
@@ -28,7 +28,7 @@ export async function createUpdateMdFile(replace = true, hint = false) {
   }
 
   const fileContent = render(fileTemp, {
-    version: versionInfo.versionNumber
+    version // 不要版本号 直接根据版本填写版本号 如需可以使用:versionInfo.versionNumber
   });
   const fileContentFormat = await format(fileContent, { parser: 'markdown' });
 
@@ -53,4 +53,27 @@ export async function openUpdateMdFile() {
     console.log('openUpdateMdFile Error:', error);
   }
   return false;
+}
+
+export async function openAndClearUpdateMdFile() {
+  const files = await glob(['**/doc/update.md'], { ignore: ['**/node_modules/**'] });
+  if (!files.length) return;
+  const system = await execCommand('uname');
+  const originFilePath = resolve(process.cwd(), files[0]);
+  let tempFile = '';
+
+  if (system === 'Darwin') {
+    // mac
+    tempFile = resolve(`/tmp/${versionInfo.projectName}.${versionInfo.versionNumber}.update.md`);
+    copyFileSync(originFilePath, tempFile);
+  } else {
+    // window
+    const tempDir = 'C:/tmp';
+    createMkdir(tempDir);
+    tempFile = join(tempDir, `./${versionInfo.projectName}.${versionInfo.versionNumber}.update.md`);
+  }
+  copyFileSync(originFilePath, tempFile);
+  await createUpdateMdFile();
+  const open = await import('open');
+  open.default(tempFile);
 }
