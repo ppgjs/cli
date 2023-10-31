@@ -234,7 +234,7 @@ export async function readFunc() {
 }
 
 // 检查功能分支是否存在
-async function checkFunBranchExist() {
+export async function checkFunBranchExist() {
   const funcBranch = await versionInfo.getFuncFullName();
   const { localExist, remoteExist, allExist } = await checkBranch(funcBranch);
   if (allExist) {
@@ -458,4 +458,18 @@ export async function moveFuncBranch() {
   await checkVersionMainBranch(oldMainBranch);
 
   await gitCheckoutBranch(newVersionBranch);
+}
+
+export async function createFixBranch() {
+  const fixBranchName = 'fixOnline';
+  versionInfo.setFuncName(fixBranchName);
+  const fixBranchFullName = await versionInfo.getFuncFullName();
+  const exist = await checkFunBranchExist();
+  if (exist) {
+    await gitProject.checkout(fixBranchFullName);
+  } else {
+    terminalLog.start('修复分支创建中');
+    await gitProject.checkoutLocalBranch(fixBranchFullName).push(GitInfo.useRemote, fixBranchFullName, ['-u']);
+    terminalLog.SuccessEnd('修复分支创建完成');
+  }
 }

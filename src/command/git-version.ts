@@ -5,6 +5,7 @@ import {
   checkVersionMainBranch,
   checkVersionMainBranchHasNotMerged,
   createBranchFromProjectFuncBranch,
+  createFixBranch,
   exitHandleCurrentBranch,
   gitDeleteBranch,
   gitPullMainNewCode,
@@ -16,7 +17,7 @@ import {
   versionInfo
 } from '../gitActionCommon';
 import { chooseActionType } from '../gitActionCommon/other';
-import { exitWithSuccess, logError, logInfo, logSuccess, logWarn } from '../shared';
+import { exitWithSuccess, gitProject, logError, logSuccess, logWarn } from '../shared';
 import { EGitVersionActionType } from '../types';
 import { openStore } from './open-git-store';
 
@@ -81,7 +82,9 @@ const publishEntrance = async () => {
 
 // fix 入口
 const fixEntrance = async () => {
-  await versionInfo.setVersionNumber();
+  await gitProject.checkout(versionInfo.projectMainBranch).pull();
+  await versionInfo.setVersionNumber('请输入修复的版本号');
+  await createFixBranch();
 };
 // move 入口
 const moveEntrance = async () => {
