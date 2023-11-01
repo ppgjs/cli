@@ -76,7 +76,6 @@ async function setupCli() {
       alias: 'p',
       options: [['-m, --more', 'Whether to ping multiple ips', { default: false }]],
       action: async (ip, options) => {
-        console.warn('🚀 ~ file: index.ts:71 ~ ip, options:', ip, options);
         await pingPort(options.more, <string>(<unknown>ip));
       }
     },

@@ -2,6 +2,7 @@ import Enquirer from 'enquirer';
 import { sys } from 'ping';
 import * as kolorist from 'kolorist';
 import { terminalLog } from '../shared';
+import dns from 'dns';
 
 const ipv4Reg = /^(\d{1,3}\.){3}\d{1,3}$/;
 const domainReg = /^([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,5})$/;
@@ -11,6 +12,7 @@ const verifyIpv4 = (val: string) => ipv4Reg.test(val);
 const verifyDomain = (val: string) => domainReg.test(val);
 const verifyIpv4OrDomain = (val: string) => verifyIpv4(val) || verifyDomain(val);
 
+// 输入ip/域名
 const inputIpOrDomain = async (
   description = '请输入ip/域名',
   errorHint = '请输入正确的ip/域名',
@@ -32,6 +34,18 @@ const inputIpOrDomain = async (
       }
     }
   ]);
+};
+const pingDomainOfIp = (hostname: string): Promise<string> => {
+  if (!verifyDomain(hostname)) return Promise.resolve('');
+  return new Promise((res, rej) => {
+    dns.lookup(`${hostname}`, (err, ipAddress) => {
+      if (err) {
+        rej(new Error(`无法解析域名 ${hostname}: ${err.message}`));
+      } else {
+        res(` 对应的IP地址:${kolorist.lightCyan(ipAddress)}`);
+      }
+    });
+  });
 };
 
 // 执行ping操作
@@ -83,11 +97,10 @@ ${ipPingResultRes.join(`\n`)}
       const { ip } = await inputIpOrDomain();
       pingIpStr = ip;
     }
-
-    const pingResult = await pingIP(pingIpStr);
+    const [domainOfIp, pingResult] = await Promise.all([pingDomainOfIp(pingIpStr), pingIP(pingIpStr)]);
     console.log(`
 -------------------
-${pingResult}
+${pingResult} ${domainOfIp}
 -------------------`);
   }
 }
