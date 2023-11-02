@@ -35,14 +35,15 @@ const inputIpOrDomain = async (
     }
   ]);
 };
+// 解析域名对应的ip
 const pingDomainOfIp = (hostname: string): Promise<string> => {
   if (!verifyDomain(hostname)) return Promise.resolve('');
-  return new Promise((res, rej) => {
+  return new Promise(res => {
     dns.lookup(`${hostname}`, (err, ipAddress) => {
       if (err) {
-        rej(new Error(`无法解析域名 ${hostname}: ${err.message}`));
+        res('');
       } else {
-        res(` 对应的IP地址:${kolorist.lightCyan(ipAddress)}`);
+        res(`对应的IP地址:${kolorist.lightCyan(ipAddress)}`);
       }
     });
   });
@@ -56,6 +57,31 @@ const pingIP = (ipStr: string) => {
       res(`${kolorist.lightBlue(ipStr)} is ${status}`);
     });
   });
+};
+
+// 解析ip主机名
+const parseIpHostname = (ipStr: string) => {
+  return Promise.resolve('');
+  if (!verifyIpv4(ipStr)) return Promise.resolve('');
+  return new Promise(res => {
+    // dns.reverse(ipStr, (err, hostnames) => {
+    dns.lookupService(ipStr, 80, (err, hostnames) => {
+      if (err) {
+        res('');
+      } else {
+        res(`主机名是: ${kolorist.lightCyan(hostnames)}`);
+      }
+    });
+  });
+};
+
+const pingIpAndHostname = async (ipStr: string) => {
+  const [ipPingRes, domainOfIp, hostName] = await Promise.all([
+    pingIP(ipStr),
+    pingDomainOfIp(ipStr),
+    parseIpHostname(ipStr)
+  ]);
+  return `${ipPingRes} ${domainOfIp} ${hostName}`;
 };
 
 export async function PingPort(pingScope: boolean, ipOrDomain: string = '') {
@@ -97,10 +123,10 @@ ${ipPingResultRes.join(`\n`)}
       const { ip } = await inputIpOrDomain();
       pingIpStr = ip;
     }
-    const [domainOfIp, pingResult] = await Promise.all([pingDomainOfIp(pingIpStr), pingIP(pingIpStr)]);
+    const res = await pingIpAndHostname(pingIpStr);
     console.log(`
 -------------------
-${pingResult} ${domainOfIp}
+        ${res}
 -------------------`);
   }
 }
