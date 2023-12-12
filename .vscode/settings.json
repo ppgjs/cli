@@ -1,7 +1,11 @@
 {
-  "cSpell.words": ["consola", "execa", "kolorist"],
+  "cSpell.words": [
+    "consola",
+    "execa",
+    "kolorist"
+  ],
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "editor.fontLigatures": true,
   "editor.formatOnSave": false,
@@ -9,7 +13,11 @@
     "strings": true
   },
   "editor.tabSize": 2,
-  "eslint.validate": ["svelte", "astro", "json"],
+  "eslint.validate": [
+    "svelte",
+    "astro",
+    "json"
+  ],
   "files.associations": {
     "*.env.*": "dotenv",
     "*.svg": "html"

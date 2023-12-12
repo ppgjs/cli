@@ -28,7 +28,6 @@ export async function gitCommit(
     { name: 'scopes', type: 'select', message: '选择一个scope', choices: scopesChoices },
     { name: 'description', type: 'text', message: '请输入提交描述', required: true }
   ]);
-  console.log('31行 - git-commit.ts  => ', selectResult);
 
   const commitMsg = `${selectResult.types}(${selectResult.scopes}): ${selectResult.description}`;
 

@@ -10,6 +10,7 @@ import {
   gitDeleteBranch,
   gitPullMainNewCode,
   handleMoreProjectBuild,
+  handleMoreProjectBuildByTest,
   mergeAToB,
   moveFuncBranch,
   oldPublish,
@@ -86,9 +87,10 @@ const fixEntrance = async () => {
   await versionInfo.setVersionNumber('请输入修复的版本号');
   await createFixBranch();
 };
+
 // move 入口
 const moveEntrance = async () => {
-  // await checkInvalidBranch();
+  await checkInvalidBranch();
 
   await parseFuncFromBranch();
 
@@ -97,6 +99,23 @@ const moveEntrance = async () => {
   await checkVersionMainBranch();
 
   await moveFuncBranch();
+};
+// test 入口
+const testEntrance = async () => {
+  await checkInvalidBranch();
+  await versionInfo.setVersionNumber();
+
+  await gitPullMainNewCode();
+
+  await checkVersionMainBranchHasNotMerged(); // 检测分支是否有代码没有合并到版本主分支
+
+  await mergeAToB(versionInfo.versionMainBranch, 'test');
+
+  await handleMoreProjectBuildByTest(); // 打包
+
+  await backToOriginalBranch();
+
+  await gitDeleteBranch(versionInfo.versionMainBranch);
 };
 
 // 入口函数
@@ -131,6 +150,9 @@ export async function getVersion(defaultType?: EGitVersionActionType) {
 
     case EGitVersionActionType.move:
       await moveEntrance();
+      break;
+    case EGitVersionActionType.test:
+      await testEntrance();
       break;
 
     default:
