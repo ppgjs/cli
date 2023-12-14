@@ -105,8 +105,6 @@ const testEntrance = async () => {
   await checkInvalidBranch();
   await versionInfo.setVersionNumber();
 
-  await gitPullMainNewCode();
-
   await checkVersionMainBranchHasNotMerged(); // 检测分支是否有代码没有合并到版本主分支
 
   await mergeAToB(versionInfo.versionMainBranch, 'test');
