@@ -361,6 +361,8 @@ async function handleBuildOperatorTs() {
       break;
     case 'test':
       await startBuild();
+      await gitProject.add('./*').commit('build dist');
+      await gitPush();
       console.log(kolorist.bgLightRed('接下来干这事：'));
       console.log(kolorist.bgLightRed('    自己不行就呼叫测试或者后端同学构建部署该分支，即可在test环境进行测试'));
       break;

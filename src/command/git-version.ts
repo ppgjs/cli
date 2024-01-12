@@ -54,7 +54,7 @@ const checkEntrance = async () => {
 const buildEntrance = async () => {
   await versionInfo.setVersionNumber();
   await checkOriginMainBranchExist();
-  await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
+  // await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
   await checkVersionMainBranchHasNotMerged();
 
   await handleMoreProjectBuild();
@@ -67,8 +67,8 @@ const publishEntrance = async () => {
   await versionInfo.setVersionNumber();
 
   await checkOriginMainBranchExist();
-
-  await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
+  // await mergeAToB(versionInfo.projectMainBranch, versionInfo.versionMainBranch);
+  await checkVersionMainBranchHasNotMerged();
 
   // 新项目中只能在 gitlab 中提交合并
   const useProjectFile = ['fhd_miniprogram_monorepo'];
