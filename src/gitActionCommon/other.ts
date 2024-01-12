@@ -42,6 +42,18 @@ export const chooseIsBuild = async (defaultIsBuild = true) => {
   ]);
   return isBuild;
 };
+// 单个选项
+export const chooseAnCheck = async (message: string, defaultCheck = true) => {
+  const { isCheck } = await Enquirer.prompt<{ isCheck: boolean }>([
+    {
+      name: 'isCheck',
+      type: 'confirm',
+      initial: defaultCheck,
+      message
+    }
+  ]);
+  return isCheck;
+};
 
 export const chooseBuildEnv = async () => {
   const { env } = await Enquirer.prompt<{ env: 'dev' | 'test' | 'prod' }>([

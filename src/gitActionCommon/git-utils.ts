@@ -16,7 +16,7 @@ import {
 import { versionInfo } from './version-info';
 
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
-import { chooseBuildEnv, chooseIsBuild, chooseOfficialBuildProject } from './other';
+import { chooseAnCheck, chooseBuildEnv, chooseIsBuild, chooseOfficialBuildProject } from './other';
 import { openAndClearUpdateMdFile, openUpdateMdFile } from './update-md';
 import dayjs from 'dayjs';
 
@@ -53,7 +53,7 @@ export async function checkInvalidBranch() {
     versionInfo.originBranch === 'main' ||
     versionInfo.originBranch.endsWith('/main')
   ) {
-    logError(`当前分支 ${versionInfo.originBranch} 错误，不能进行合并操作`);
+    logError(`当前分支 ${versionInfo.originBranch} 错误，不能进行操作`);
     return exitWithError();
   }
   return true;
@@ -335,16 +335,29 @@ export async function startBuild(defaultIsBuild = true) {
         stdio: 'inherit'
       });
       logSuccess('编译完成!');
+      return true;
     } catch (error) {
       logError('编译失败!');
+      return false;
     }
   }
+  return false;
 }
 
 // 普通的打包
-async function handleBuildNormal() {
-  await openUpdateMdFile();
-  await startBuild();
+async function handleBuildNormal(hasOpenUpdateMdFile = true) {
+  if (hasOpenUpdateMdFile) {
+    await openUpdateMdFile();
+  }
+  const buildStatus = await startBuild();
+
+  if (buildStatus) {
+    const hasPush = await chooseAnCheck('是否需要将打包好的文件推送到远端');
+    if (hasPush) {
+      await gitProject.add('./*').commit(`chore: build test branch ${dayjs().format('M-D_H:m')}`);
+      await gitPush();
+    }
+  }
 }
 // 综合运营系统的打包
 async function handleBuildOperatorTs() {
@@ -355,7 +368,7 @@ async function handleBuildOperatorTs() {
       await mergeAToB(versionInfo.versionMainBranch, 'dev');
       await startBuild();
       await gitProject.add('./*').commit('build dist');
-      await gitPush();
+
       console.log(kolorist.bgLightRed('接下来干这事：'));
       console.log(kolorist.bgLightRed('    钉钉@cyc，cyc会打包部署到dev环境'));
       break;
@@ -380,6 +393,20 @@ async function handleBuildOfficialTs() {
   await execCommand('npm', ['run', `build:${selectProject}`], { stdio: 'inherit' });
   console.log(kolorist.bgLightRed('接下来干这事：'));
   console.log(kolorist.bgLightRed('    钉钉@cyc，将打包文件发给他'));
+}
+
+// 不同项目的打包特殊处理 测试环境
+export async function handleMoreProjectBuildByTest() {
+  switch (versionInfo.projectName) {
+    case 'operator-ts':
+      await handleBuildOperatorTs();
+      break;
+    case 'official-ts':
+      await handleBuildOfficialTs();
+      break;
+    default:
+      await handleBuildNormal(false);
+  }
 }
 
 // 不同项目的打包特殊处理
