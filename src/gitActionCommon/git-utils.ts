@@ -28,6 +28,11 @@ export function backToOriginalBranch() {
 // 合并分支 A分支 合并到 B分支
 export async function mergeAToB(A: string, B: string) {
   logInfo(`合并分支:${A} to ${B}`);
+
+  // 拉取A分支最新代码
+  await gitCheckoutBranch(A, '', false);
+  await gitPull(false);
+
   await gitCheckoutBranch(B);
   await gitPull(false);
   try {
