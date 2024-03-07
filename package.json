@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "bumpp": "^9.2.0",
-    "c12": "^1.4.2",
+    "c12": "^1.10.0",
     "cac": "^6.7.14",
     "cli-spinners": "^2.9.1",
     "dayjs": "^1.11.10",
@@ -85,5 +85,10 @@
     "pkg-types": "^1.0.3",
     "prettier": "^3.0.3",
     "simple-git": "^3.20.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "c12@1.10.0": "patches/c12@1.10.0.patch"
+    }
   }
 }

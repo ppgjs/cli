@@ -110,7 +110,7 @@ export async function gitPush(showMessage = true, branch = '') {
 
 // 拉取当前分支远程最新代码
 export async function gitPull(showMessage = true) {
-  const result = await execCommand('git pull');
+  const result = await execCommand('git', ['pull']);
   if (showMessage) {
     const branch = await gitGetCurrentBranch();
     logSuccess(`拉取 ${branch} 分支最新代码`);

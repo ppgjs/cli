@@ -1,0 +1,27 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 53a6f6138ce13a55a9e2408878ea12a29b56f0c4..3a7fe370883e5a6fa1f84282a9d62ecdfda0d124 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -182,7 +182,8 @@ async function loadConfig(options) {
+     ]).filter((t) => t && typeof t === "string");
+     const pkgJsonFile = await pkgTypes.readPackageJSON(options.cwd).catch(() => {
+     });
+-    const values = keys.map((key) => pkgJsonFile?.[key]);
++    //my fix
++    const values = keys.map((key) => ({key:pkgJsonFile?.[key]}));
+     Object.assign(pkgJson, defu.defu({}, ...values));
+   }
+   r.config = defu.defu(
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 2598d1bc51da87b32ea2f0f50610c3027e836e56..bb53c109d1a94daae20e4e7d58c6b40b3497bde7 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -162,7 +162,7 @@ async function loadConfig(options) {
+     ]).filter((t) => t && typeof t === "string");
+     const pkgJsonFile = await readPackageJSON(options.cwd).catch(() => {
+     });
+-    const values = keys.map((key) => pkgJsonFile?.[key]);
++    const values = keys.map((key) => ({key:pkgJsonFile?.[key]}));
+     Object.assign(pkgJson, defu({}, ...values));
+   }
+   r.config = defu(
