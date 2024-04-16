@@ -7,6 +7,9 @@ import {
   createBranchFromProjectFuncBranch,
   createFixBranch,
   exitHandleCurrentBranch,
+  getGitlabLaunchMergeRequestByProjectId,
+  getGitlabProjectIdByProjectName,
+  getProjectRemoteName,
   gitDeleteBranch,
   gitPullMainNewCode,
   handleMoreProjectBuild,
@@ -15,12 +18,38 @@ import {
   moveFuncBranch,
   oldPublish,
   parseFuncFromBranch,
+  readGitlabToken,
   versionInfo
 } from '../gitActionCommon';
 import { chooseActionType } from '../gitActionCommon/other';
 import { exitWithSuccess, gitProject, logError, logSuccess, logWarn } from '../shared';
 import { EGitVersionActionType } from '../types';
 import { openStore } from './open-git-store';
+
+// merge Request 入口
+const mergeRequestEnter = async () => {
+  await checkInvalidBranch();
+  await versionInfo.setVersionNumber();
+
+  await gitPullMainNewCode();
+
+  await mergeAToB(versionInfo.projectMainBranch, versionInfo.originBranch);
+
+  await backToOriginalBranch();
+
+  const gitlabToken = readGitlabToken();
+  if (!gitlabToken) return;
+
+  const projectName = await getProjectRemoteName();
+
+  const projectId = await getGitlabProjectIdByProjectName(projectName, gitlabToken);
+  await getGitlabLaunchMergeRequestByProjectId({
+    projectId,
+    gitlabToken,
+    originBranch: versionInfo.originBranch,
+    targetBranch: versionInfo.versionMainBranch
+  });
+};
 
 // merge 入口
 const mergeEnter = async () => {
@@ -122,6 +151,10 @@ export async function getVersion(defaultType?: EGitVersionActionType) {
   const actionType = await chooseActionType(defaultType);
 
   switch (actionType) {
+    case EGitVersionActionType.mq:
+      await mergeRequestEnter();
+      break;
+
     case EGitVersionActionType.merge:
       await mergeEnter();
       break;

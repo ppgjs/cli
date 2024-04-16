@@ -1,6 +1,7 @@
 export enum EGitVersionActionType {
   'new' = 'new',
   'merge' = 'merge',
+  'mq' = 'mq',
   'build' = 'build',
   'publish' = 'publish',
   'check' = 'check',
@@ -11,6 +12,7 @@ export enum EGitVersionActionType {
 export const actionDescription: Record<EGitVersionActionType, string> = {
   [EGitVersionActionType.new]: '创建新的版本功能分支',
   [EGitVersionActionType.merge]: '合并功能分支到版本主分支',
+  [EGitVersionActionType.mq]: '发起合并请求：功能分支->版本主分支',
   [EGitVersionActionType.test]: '将版本主分支合并到test分支',
   [EGitVersionActionType.build]: '切换到版本主分支，等待打包',
   [EGitVersionActionType.publish]: '发布版本，版本主分支合并到master分支',

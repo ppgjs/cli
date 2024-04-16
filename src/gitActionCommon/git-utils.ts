@@ -15,10 +15,14 @@ import {
 } from '../shared';
 import { versionInfo } from './version-info';
 
+import { Axios } from 'axios';
+import dayjs from 'dayjs';
+import { readFileSync, statSync } from 'fs-extra';
+import path from 'path';
+import { stringify } from 'querystring';
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
 import { chooseAnCheck, chooseBuildEnv, chooseIsBuild, chooseOfficialBuildProject } from './other';
 import { openAndClearUpdateMdFile, openUpdateMdFile } from './update-md';
-import dayjs from 'dayjs';
 
 // 退回到原分支
 export function backToOriginalBranch() {
@@ -69,6 +73,104 @@ export async function gitGetCurrentBranch() {
   return execCommand('git', ['symbolic-ref', '--short', 'HEAD']);
 }
 
+export function readGitlabToken(): string {
+  const systemDefaultPath = process.env.HOME;
+  if (!systemDefaultPath) {
+    logError('没有找到系统默认路径');
+    return '';
+  }
+
+  const TOKEN_FILE_NAME = 'gitlab.token';
+  const gitlabTokenPath = path.join(systemDefaultPath, TOKEN_FILE_NAME);
+
+  try {
+    statSync(gitlabTokenPath);
+  } catch (error) {
+    logError(`没有找到 ${gitlabTokenPath} 文件`);
+    logWarn(`请创建并写在 ${systemDefaultPath} 目录下的 ${TOKEN_FILE_NAME} 文件中，内容为GitLab个人访问令牌`);
+    logInfo('导航链接: http://git.rantron.biz:3002/-/profile/personal_access_tokens');
+    return '';
+  }
+  let gitlabToken = '';
+  try {
+    gitlabToken = readFileSync(gitlabTokenPath, { encoding: 'utf8' });
+    if (!gitlabToken) throw new Error('文件没有内容');
+  } catch (error) {
+    logError(`读取 ${gitlabTokenPath} 文件失败，请检查文件是否正常`);
+  }
+  return gitlabToken;
+}
+
+// 获取项目远程的名称
+export async function getProjectRemoteName() {
+  const { value } = await gitProject.getConfig(`remote.${GitInfo.useRemote}.url`);
+
+  const regex = /\/([^/]+)\.git$/;
+  const match = value?.match(regex);
+
+  if (match) {
+    const projectName = match[1];
+    return projectName;
+  }
+  throw new Error('获取项目名称错误');
+}
+
+// gitlab根据项目名称获取 项目id
+export async function getGitlabProjectIdByProjectName(projectName: string, gitlabToken: string) {
+  try {
+    const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
+    const result = await axios.get(`http://git.rantron.biz:3002/api/v4/projects?search=${projectName}`);
+    const parseData = JSON.parse(result.data);
+    const projectId = parseData?.[0]?.id;
+    if (projectId) return projectId;
+  } catch (error: any) {
+    logInfo(error);
+  }
+  throw new Error('获取 项目id 错误啦');
+}
+
+type IMergeRequestParams = {
+  projectId: string;
+  gitlabToken: string;
+  originBranch: string;
+  targetBranch: string;
+};
+
+// gitlab根据项目id 发起合并请求
+export async function getGitlabLaunchMergeRequestByProjectId({
+  projectId,
+  gitlabToken,
+  originBranch,
+  targetBranch
+}: IMergeRequestParams) {
+  try {
+    const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
+    const result = await axios.post(
+      `http://git.rantron.biz:3002/api/v4/projects/${projectId}/merge_requests`,
+      stringify({
+        source_branch: originBranch,
+        target_branch: targetBranch,
+        title: `new merge request  ${originBranch} -> ${targetBranch}`
+      })
+    );
+    const parseData = JSON.parse(result.data);
+
+    if (parseData.iid /* 请求成功 */) {
+      logInfo(`请求合并到 ${targetBranch} 分支成功，请求id：${parseData.iid}，找组长代码审核`);
+      logInfo(`导航链接: ${parseData.web_url}`);
+      return true;
+    } else if (parseData.message) {
+      console.log(`${kolorist.red('请求合并发生错误，')}${kolorist.lightMagenta(`错误信息：${parseData.message}`)}`);
+    } else {
+      throw parseData;
+    }
+  } catch (error: any) {
+    console.log('🏷️ ~ error:', error);
+    logError(error);
+  }
+  return false;
+}
+
 // 检查工作区状态
 export async function checkWorkingStatus() {
   return execCommand('git', ['status']);
@@ -99,11 +201,11 @@ export async function gitPush(showMessage = true, branch = '') {
   try {
     const result = await execCommand('git', ['push', '-u', GitInfo.useRemote, pushUseBranch]);
     if (showMessage) {
-      logSuccess(`推送分支 ${pushUseBranch} 到 远程 ${GitInfo.useRemote}`);
+      logSuccess(`推送分支 ${pushUseBranch} 到 远程 ${GitInfo.useRemote} `);
     }
     return result;
   } catch (error) {
-    logError(`推送失败 ${pushUseBranch}`);
+    logError(`推送失败 ${pushUseBranch} `);
     return Promise.reject(error);
   }
 }
@@ -124,7 +226,7 @@ export async function gitCheckoutBranch(branch: string, logMessage = '', showLog
   if (currentBranch === branch) return true;
   await execCommand('git', ['checkout', branch]);
   if (showLog) {
-    logSuccess(logMessage || `切换分支到 ${branch}`);
+    logSuccess(logMessage || `切换分支到 ${branch} `);
   }
   return true;
 }
