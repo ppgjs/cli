@@ -83,3 +83,17 @@ export const chooseOfficialBuildProject = async () => {
   ]);
   return project;
 };
+
+// 选择合并的分支
+export const chooseMergeRequestTargetBranch = async (branchNames: string[], defaultBranch: number = 0) => {
+  const { branchName } = await Enquirer.prompt<{ branchName: string }>([
+    {
+      name: 'branchName',
+      type: 'select',
+      initial: defaultBranch,
+      message: '请选择目标分支，(默认版本主分支)',
+      choices: branchNames.map(i => ({ name: i }))
+    }
+  ]);
+  return branchName;
+};

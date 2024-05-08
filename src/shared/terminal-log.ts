@@ -43,7 +43,7 @@ class TerminalLog {
     }
   }
 
-  start(showDesc = 'loading', preTextFormat = 'loading **s') {
+  start(showDesc = 'waiting', preTextFormat = 'waiting **s') {
     this.showDesc = kolorist.red(showDesc);
     this.index = 0;
     this.preTextFormat = preTextFormat;

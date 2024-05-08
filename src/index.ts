@@ -8,7 +8,7 @@ import type { CliOption, EGitVersionActionType } from './types/index';
 import { version } from '../package.json';
 import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './command';
 import { exitWithError, logWarn } from './shared';
-import { PingPort as pingPort, deleteTag } from './gitActionCommon';
+import { PingPort as pingPort, deleteTag, backToOriginalBranch } from './gitActionCommon';
 
 type CommandName =
   | 'git-commit'
@@ -59,6 +59,7 @@ async function setupCli() {
         try {
           await getVersion(<EGitVersionActionType>(<unknown>actionType));
         } catch (error) {
+          backToOriginalBranch();
           logWarn(JSON.stringify(error));
           exitWithError();
         }

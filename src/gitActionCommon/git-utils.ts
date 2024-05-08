@@ -21,7 +21,13 @@ import { readFileSync, statSync } from 'fs-extra';
 import path from 'path';
 import { stringify } from 'querystring';
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
-import { chooseAnCheck, chooseBuildEnv, chooseIsBuild, chooseOfficialBuildProject } from './other';
+import {
+  chooseAnCheck,
+  chooseBuildEnv,
+  chooseIsBuild,
+  chooseMergeRequestTargetBranch,
+  chooseOfficialBuildProject
+} from './other';
 import { openAndClearUpdateMdFile, openUpdateMdFile } from './update-md';
 
 // 退回到原分支
@@ -156,7 +162,7 @@ export async function getGitlabLaunchMergeRequestByProjectId({
     const parseData = JSON.parse(result.data);
 
     if (parseData.iid /* 请求成功 */) {
-      logInfo(`请求合并到 ${targetBranch} 分支成功，请求id：${parseData.iid}，找组长代码审核`);
+      logInfo(`合并请求 ${originBranch} -> ${originBranch} 创建成功，请求id：${parseData.iid}，找项目负责人进行审核`);
       logInfo(`导航链接: ${parseData.web_url}`);
       return true;
     } else if (parseData.message) {
@@ -609,3 +615,66 @@ export async function createFixBranch() {
     terminalLog.SuccessEnd('修复分支创建完成');
   }
 }
+
+/* 获取mq的目标分支名称 */
+export async function getMergeRequestTargetBranch() {
+  const { all } = await gitProject.branch(['-r']);
+
+  const branchList = all
+    .filter(
+      branchName =>
+        branchName.includes(`${GitInfo.useRemote}/${versionInfo.versionNumber}/`) &&
+        !branchName.endsWith(`${GitInfo.useRemote}/${versionInfo.originBranch}`)
+    )
+    .sort((a, b) => {
+      if (a.includes('main') && !b.includes('main')) {
+        return -1;
+      } else if (!a.includes('main') && b.includes('main')) {
+        return 1;
+      }
+      return 0;
+    });
+  if (!branchList.length) {
+    await backToOriginalBranch();
+    throw new Error('没有其他版本分支');
+  }
+  const targetBranchName = await chooseMergeRequestTargetBranch(branchList);
+  return targetBranchName.replace(`${GitInfo.useRemote}/`, '');
+}
+
+export const getMergeRquestOriginBranch = async (targetBranch: string): Promise<string> => {
+  const tempBranch = `${versionInfo.originBranch}_temp_merge`;
+  let originBranch = versionInfo.originBranch;
+  let hasConflict = true; /* 存在冲突 */
+  try {
+    /* 预检测合并是否有冲突 */
+    const result = await execCommand('git', ['merge', `${GitInfo.useRemote}/${targetBranch}`, '--no-commit']);
+    console.log('🏷️ git-version.ts ~ 50 => ', result);
+    gitProject.merge(['--abort']);
+    hasConflict = false;
+    console.log('🏷️ git-version.ts ~ 53 => 正常');
+  } catch (error) {
+    logWarn('和版本主分支存在冲突，先在当前分支解决冲突后再提交合并请求。');
+    gitProject.merge(['--abort']);
+    // 存在冲突 创建临时分支提交合并请求
+  }
+  // 删除临时分支
+  try {
+    await Promise.all([
+      execCommand('git', ['push', '--delete', GitInfo.useRemote, tempBranch]),
+      execCommand('git', ['branch', '-d', tempBranch])
+    ]);
+  } catch (error: any) {
+    console.log('🏷️ ~ error:', error.mesage);
+  }
+
+  if (hasConflict) {
+    /* 有冲突 缘分支切换为临时分支 */
+    originBranch = tempBranch;
+    await execCommand('git', ['checkout', '-b', tempBranch]);
+    await gitPush();
+    await mergeAToB(targetBranch, tempBranch);
+  }
+
+  return originBranch;
+};

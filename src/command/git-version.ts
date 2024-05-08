@@ -9,6 +9,8 @@ import {
   exitHandleCurrentBranch,
   getGitlabLaunchMergeRequestByProjectId,
   getGitlabProjectIdByProjectName,
+  getMergeRequestTargetBranch,
+  getMergeRquestOriginBranch,
   getProjectRemoteName,
   gitDeleteBranch,
   gitPullMainNewCode,
@@ -33,12 +35,15 @@ const mergeRequestEnter = async () => {
 
   await gitPullMainNewCode();
 
+  const targetBranch = await getMergeRequestTargetBranch();
+
   await mergeAToB(versionInfo.projectMainBranch, versionInfo.originBranch);
 
   await backToOriginalBranch();
 
   const gitlabToken = readGitlabToken();
   if (!gitlabToken) return;
+  const originBranch = await getMergeRquestOriginBranch(targetBranch);
 
   const projectName = await getProjectRemoteName();
 
@@ -46,9 +51,11 @@ const mergeRequestEnter = async () => {
   await getGitlabLaunchMergeRequestByProjectId({
     projectId,
     gitlabToken,
-    originBranch: versionInfo.originBranch,
-    targetBranch: versionInfo.versionMainBranch
+    originBranch,
+    targetBranch
   });
+
+  await backToOriginalBranch();
 };
 
 // merge 入口
