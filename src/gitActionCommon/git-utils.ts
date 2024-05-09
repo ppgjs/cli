@@ -648,11 +648,9 @@ export const getMergeRquestOriginBranch = async (targetBranch: string): Promise<
   let hasConflict = true; /* 存在冲突 */
   try {
     /* 预检测合并是否有冲突 */
-    const result = await execCommand('git', ['merge', `${GitInfo.useRemote}/${targetBranch}`, '--no-commit']);
-    console.log('🏷️ git-version.ts ~ 50 => ', result);
+    await execCommand('git', ['merge', `${GitInfo.useRemote}/${targetBranch}`, '--no-commit']);
     gitProject.merge(['--abort']);
     hasConflict = false;
-    console.log('🏷️ git-version.ts ~ 53 => 正常');
   } catch (error) {
     logWarn('和版本主分支存在冲突，先在当前分支解决冲突后再提交合并请求。');
     gitProject.merge(['--abort']);
@@ -664,9 +662,7 @@ export const getMergeRquestOriginBranch = async (targetBranch: string): Promise<
       execCommand('git', ['push', '--delete', GitInfo.useRemote, tempBranch]),
       execCommand('git', ['branch', '-d', tempBranch])
     ]);
-  } catch (error: any) {
-    console.log('🏷️ ~ error:', error.mesage);
-  }
+  } catch (error: any) {}
 
   if (hasConflict) {
     /* 有冲突 缘分支切换为临时分支 */
