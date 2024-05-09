@@ -7,8 +7,9 @@ import type { CliOption, EGitVersionActionType } from './types/index';
 
 import { version } from '../package.json';
 import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './command';
+import { backToOriginalBranch, deleteTag, PingPort as pingPort } from './gitActionCommon';
+
 import { exitWithError, logWarn } from './shared';
-import { PingPort as pingPort, deleteTag, backToOriginalBranch } from './gitActionCommon';
 
 type CommandName =
   | 'git-commit'

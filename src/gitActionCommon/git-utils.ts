@@ -17,7 +17,7 @@ import { versionInfo } from './version-info';
 
 import { Axios } from 'axios';
 import dayjs from 'dayjs';
-import { readFileSync, statSync } from 'fs-extra';
+import { readFileSync, statSync, writeFileSync } from 'fs-extra';
 import path from 'path';
 import { stringify } from 'querystring';
 import { RegGitVersion, RegResultSplitToArr } from './git-regexp';
@@ -79,15 +79,51 @@ export async function gitGetCurrentBranch() {
   return execCommand('git', ['symbolic-ref', '--short', 'HEAD']);
 }
 
-export function readGitlabToken(): string {
+// 获取gitlab token的path
+export function getGitlabTokenPath() {
   const systemDefaultPath = process.env.HOME;
   if (!systemDefaultPath) {
     logError('没有找到系统默认路径');
     return '';
   }
+  const gitlabTokenPath = path.join(systemDefaultPath, 'gitlab.token');
+  return gitlabTokenPath;
+}
 
+/* 删除token */
+export function deleteGitlabToken() {
+  writeFileSync(getGitlabTokenPath(), '');
+}
+
+export async function initGitToken() {
+  const token = await readGitlabToken({ showError: false });
+  if (token) return true;
+  const { tempToken } = await Enquirer.prompt<{ tempToken: string }>({
+    name: 'tempToken',
+    type: 'text',
+    message: '请填写临时令牌',
+    validate: text => {
+      const trim = text.trim();
+      if (!trim.length) {
+        return '请输入有效的字符串';
+      }
+      return true;
+    }
+  });
+
+  const gitlabTokenPath = getGitlabTokenPath();
+  if (!gitlabTokenPath) return false;
+
+  writeFileSync(gitlabTokenPath, tempToken);
+  return true;
+}
+
+export function readGitlabToken({ showError } = { showError: true }): string {
   const TOKEN_FILE_NAME = 'gitlab.token';
-  const gitlabTokenPath = path.join(systemDefaultPath, TOKEN_FILE_NAME);
+  const gitlabTokenPath = getGitlabTokenPath();
+  if (!gitlabTokenPath) return '';
+
+  const systemDefaultPath = process.env.HOME;
 
   try {
     statSync(gitlabTokenPath);
@@ -99,10 +135,12 @@ export function readGitlabToken(): string {
   }
   let gitlabToken = '';
   try {
-    gitlabToken = readFileSync(gitlabTokenPath, { encoding: 'utf8' });
-    if (!gitlabToken) throw new Error('文件没有内容');
+    gitlabToken = readFileSync(gitlabTokenPath, { encoding: 'utf8' }).trim();
+    if (!gitlabToken) logError(`${gitlabTokenPath} 文件没有内容`);
   } catch (error) {
-    logError(`读取 ${gitlabTokenPath} 文件失败，请检查文件是否正常`);
+    if (showError) {
+      logError(`读取 ${gitlabTokenPath} 文件失败，请检查文件是否存在`);
+    }
   }
   return gitlabToken;
 }
@@ -130,8 +168,9 @@ export async function getGitlabProjectIdByProjectName(projectName: string, gitla
     const projectId = parseData?.[0]?.id;
     if (projectId) return projectId;
   } catch (error: any) {
-    logInfo(error);
+    logInfo(`getGitlabProjectIdByProjectName error ${error}`);
   }
+  deleteGitlabToken();
   throw new Error('获取 项目id 错误啦');
 }
 
@@ -171,7 +210,7 @@ export async function getGitlabLaunchMergeRequestByProjectId({
       throw parseData;
     }
   } catch (error: any) {
-    console.log('🏷️ ~ error:', error);
+    console.log('🏷️ ~ getGitlabLaunchMergeRequestByProjectId error:', error);
     logError(error);
   }
   return false;

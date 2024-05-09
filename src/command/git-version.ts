@@ -16,6 +16,7 @@ import {
   gitPullMainNewCode,
   handleMoreProjectBuild,
   handleMoreProjectBuildByTest,
+  initGitToken,
   mergeAToB,
   moveFuncBranch,
   oldPublish,
@@ -32,6 +33,9 @@ import { openStore } from './open-git-store';
 const mergeRequestEnter = async () => {
   await checkInvalidBranch();
   await versionInfo.setVersionNumber();
+
+  const initResult = await initGitToken();
+  if (!initResult) return;
 
   await gitPullMainNewCode();
 
