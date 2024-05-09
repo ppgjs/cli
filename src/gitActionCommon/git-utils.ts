@@ -162,7 +162,7 @@ export async function getGitlabLaunchMergeRequestByProjectId({
     const parseData = JSON.parse(result.data);
 
     if (parseData.iid /* 请求成功 */) {
-      logInfo(`合并请求 ${originBranch} -> ${originBranch} 创建成功，请求id：${parseData.iid}，找项目负责人进行审核`);
+      logInfo(`创建合并请求成功 ${originBranch} -> ${targetBranch} ，请求id：${parseData.iid}，找项目负责人进行审核`);
       logInfo(`导航链接: ${parseData.web_url}`);
       return true;
     } else if (parseData.message) {
