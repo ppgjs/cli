@@ -8,10 +8,9 @@ import {
   createFixBranch,
   exitHandleCurrentBranch,
   getGitlabLaunchMergeRequestByProjectId,
-  getGitlabProjectIdByProjectName,
+  getGitlabProjectId,
   getMergeRequestTargetBranch,
   getMergeRquestOriginBranch,
-  getProjectRemoteName,
   gitDeleteBranch,
   gitPullMainNewCode,
   handleMoreProjectBuild,
@@ -49,9 +48,9 @@ const mergeRequestEnter = async () => {
   if (!gitlabToken) return;
   const originBranch = await getMergeRquestOriginBranch(targetBranch);
 
-  const projectName = await getProjectRemoteName();
+  // const projectName = await getProjectRemoteName();
 
-  const projectId = await getGitlabProjectIdByProjectName(projectName, gitlabToken);
+  const projectId = await getGitlabProjectId();
   await getGitlabLaunchMergeRequestByProjectId({
     projectId,
     gitlabToken,

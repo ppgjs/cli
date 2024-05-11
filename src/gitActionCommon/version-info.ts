@@ -10,6 +10,7 @@ import {
   watchProcessAccident
 } from '../shared';
 import { backToOriginalBranch, checkBranch, checkWorkingNoCommit, verifyVersion } from './git-utils';
+import { GitInfo } from '../config';
 
 export class VersionInfo {
   projectName = ''; // 项目名称
@@ -37,6 +38,12 @@ export class VersionInfo {
     await checkWorkingNoCommit();
     // 监听程序中断意外退出
     watchProcessAccident(backToOriginalBranch);
+    try {
+      // 刷新分支错误
+      await execCommand('git', ['remote', 'update', GitInfo.useRemote, '--prune']);
+    } catch (error) {
+      console.log('刷新分支错误: ', error);
+    }
   }
 
   setMainBranch() {

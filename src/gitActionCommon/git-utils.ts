@@ -160,18 +160,35 @@ export async function getProjectRemoteName() {
 }
 
 // gitlab根据项目名称获取 项目id
-export async function getGitlabProjectIdByProjectName(projectName: string, gitlabToken: string) {
-  try {
-    const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
-    const result = await axios.get(`http://git.rantron.biz:3002/api/v4/projects?search=${projectName}`);
-    const parseData = JSON.parse(result.data);
-    const projectId = parseData?.[0]?.id;
-    if (projectId) return projectId;
-  } catch (error: any) {
-    logInfo(`getGitlabProjectIdByProjectName error ${error}`);
+export async function getGitlabProjectId() {
+  const { value = '' } = await gitProject.getConfig(`remote.${GitInfo.useRemote}.url`);
+  // 使用正则表达式提取项目id
+  const match = value?.match(/\/([^/]+\/[^/]+)\.git$/);
+
+  // 如果匹配成功，match数组的第一个元素是完整的匹配，第二个元素是捕获组
+  if (match && match[1]) {
+    const projectId = match[1];
+    return encodeURIComponent(projectId);
   }
-  deleteGitlabToken();
-  throw new Error('获取 项目id 错误啦');
+
+  throw new Error(`获取 项目id 错误啦 ${value}`);
+
+  /* 
+  通过接口获取项目id
+    projectName: string, gitlabToken: string
+  
+    try {
+      const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
+      const result = await axios.get(`http://git.rantron.biz:3002/api/v4/projects?search=${projectName}`);
+      const parseData = JSON.parse(result.data);
+      const projectId = parseData?.[0]?.id;
+      if (projectId) return projectId;
+    } catch (error: any) {
+      logInfo(`getGitlabProjectId error ${error}`);
+    }
+    deleteGitlabToken();
+    throw new Error('获取 项目id 错误啦'); 
+  */
 }
 
 type IMergeRequestParams = {
@@ -211,6 +228,7 @@ export async function getGitlabLaunchMergeRequestByProjectId({
     }
   } catch (error: any) {
     console.log('🏷️ ~ getGitlabLaunchMergeRequestByProjectId error:', error);
+    deleteGitlabToken();
     logError(error);
   }
   return false;
@@ -295,6 +313,9 @@ export async function gitDeleteBranch(
     await execCommand('git', ['branch', '-d', branchName]);
   }
   if (options.deleteRemote) {
+    if (branchName.includes('main')) {
+      throw new Error('delete protected branches using');
+    }
     await execCommand('git', ['push', GitInfo.useRemote, '--delete', branchName]);
   }
   if ((options.deleteLocal || options.deleteRemote) && options.showLog)
@@ -319,7 +340,7 @@ export async function checkBranch(branch: string) {
     remoteExist,
     localExist,
     allExist: remoteExist && localExist,
-    allNotExist: !remoteExist && !remoteExist
+    allNotExist: !remoteExist && !localExist
   };
 }
 
@@ -609,8 +630,9 @@ export async function oldPublish() {
 // 迁移功能分支
 export async function moveFuncBranch() {
   const exist = await checkFunBranchExist();
+  await backToOriginalBranch();
+
   if (exist) {
-    await backToOriginalBranch();
     await exitWithError();
   }
 
@@ -622,23 +644,57 @@ export async function moveFuncBranch() {
 
   gitPush();
   logInfo(`修改分支 ${versionInfo.originBranch} 为 ${newVersionBranch}`);
-  await gitDeleteBranch(versionInfo.originBranch, { deleteRemote: true });
-  logWarn(`删除远程分支 ${versionInfo.originBranch}`);
+  const { remoteExist: originBranchRemoteExist } = await checkBranch(oldMainBranch);
+
+  await gitDeleteBranch(versionInfo.originBranch, { deleteRemote: originBranchRemoteExist, deleteLocal: false });
+
+  if (originBranchRemoteExist) {
+    logWarn(`删除远程分支 ${versionInfo.originBranch}`);
+  }
 
   // 删除旧的功能主分支
   const { remoteExist, localExist } = await checkBranch(oldMainBranch);
   if (remoteExist || localExist) {
-    await gitDeleteBranch(oldMainBranch, {
-      deleteRemote: remoteExist,
-      deleteLocal: localExist,
-      showLog: false
-    });
+    try {
+      await gitDeleteBranch(oldMainBranch, {
+        deleteRemote: remoteExist,
+        deleteLocal: localExist,
+        showLog: false
+      });
+    } catch (error: any) {
+      // 删除失败
+      if (JSON.stringify(error).includes('delete protected branches using') /* 删除受保护的分支 通过api删除 */) {
+        const deleteResult = await gitlabApiDeleteBranch(oldMainBranch);
+        if (!deleteResult) return;
+      } else {
+        logError(error);
+        return;
+      }
+    }
   }
 
   // 创建旧的版本主分支
   await checkVersionMainBranch(oldMainBranch);
 
   await gitCheckoutBranch(newVersionBranch);
+}
+
+export async function gitlabApiDeleteBranch(branchName: string): Promise<boolean> {
+  try {
+    const projectId = await getGitlabProjectId();
+    const initResult = await initGitToken();
+    if (!initResult) return false;
+    const gitlabToken = await readGitlabToken();
+    const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
+    await axios.delete(
+      `http://git.rantron.biz:3002/api/v4/projects/${projectId}/repository/branches/${encodeURIComponent(branchName)}`
+    );
+    await execCommand('git', ['remote', 'update', GitInfo.useRemote, '--prune']);
+    return true;
+  } catch (deleteErr: any) {
+    logInfo(`删除远程 ${branchName} 分支错误 error ${deleteErr}`);
+  }
+  return false;
 }
 
 export async function createFixBranch() {
