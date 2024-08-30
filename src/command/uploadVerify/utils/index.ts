@@ -43,10 +43,3 @@ export const getFileRoot = async (wrapFileRoot?: string): Promise<string> => {
 
   return readUploadInfo.fileRoot
 }
-
-
-const checkUploadToken = async () => {
-  const file = await getFileRoot()
-  const readUploadInfo: IUploadFileType = extra.readJsonSync(file)
-
-}
