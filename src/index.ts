@@ -10,6 +10,7 @@ import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './co
 import { backToOriginalBranch, deleteTag, PingPort as pingPort } from './gitActionCommon';
 
 import { exitWithError, logWarn } from './shared';
+import UploadVerifyFile from './command/uploadVerify/index';
 
 type CommandName =
   | 'git-commit'
@@ -18,6 +19,7 @@ type CommandName =
   | 'ping [ip]'
   | 'delete-tag [tagName]'
   | 'git-version [actionType]'
+  | 'public-verify [fileRoot]'
   | 'release';
 
 type CommandActions<T extends object> = (args: T, options: Record<string, any>) => Promise<void> | void;
@@ -51,7 +53,7 @@ async function setupCli() {
         } catch (error) {
           exitWithError();
         }
-      }
+      },
     },
     'git-version [actionType]': {
       desc: '版本分支操作',
@@ -64,14 +66,14 @@ async function setupCli() {
           logWarn(JSON.stringify(error));
           exitWithError();
         }
-      }
+      },
     },
     'git-commit-verify': {
       desc: '检测最近的一次commit信息是否符合 Conventional Commit规范',
       alias: 'gcv',
       action: async () => {
         await gitCommitVerify();
-      }
+      },
     },
     'ping [ip]': {
       desc: 'ping ip/域名',
@@ -79,29 +81,37 @@ async function setupCli() {
       options: [['-m, --more', 'Whether to ping multiple ips', { default: false }]],
       action: async (ip, options) => {
         await pingPort(options.more, <string>(<unknown>ip));
-      }
+      },
     },
     'delete-tag [tagName]': {
       desc: '删除远程tag',
       alias: 'dt',
       action: async tag => {
         await deleteTag(<string>(<unknown>tag));
-      }
+      },
+    },
+    'public-verify [fileRoot]': {
+      desc: '将校验文件发布到远程',
+      alias: 'pv',
+      action: async fileRoot => {
+        const uploadVerifyFile = new UploadVerifyFile();
+        await uploadVerifyFile.main(<string>(<unknown>fileRoot));
+      },
     },
     open: {
       desc: '在浏览器打开当前仓库',
       alias: 'o',
       action: async () => {
         await openStore();
-      }
+      },
     },
     release: {
       desc: '发布：更新版本号、生成changelog、提交代码',
       alias: 'r',
       action: async () => {
         await release();
-      }
-    }
+      },
+    },
   };
 
   for await (const [command, { options, desc, action, alias = command.replace(/\s.+/gi, '') }] of Object.entries(
