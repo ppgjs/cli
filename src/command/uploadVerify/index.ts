@@ -139,9 +139,11 @@ export default class UploadVerifyFile {
 
   uploadEntry = async () => {
     await this.initUploadInfoList();
-    await this.uploadInfoList.map(item => {
-      return this.publicZip(item);
-    });
+    await Promise.all(
+      this.uploadInfoList.map(item => {
+        return this.publicZip(item);
+      })
+    );
   };
 
   initToken = async (token: string): Promise<string> => {
