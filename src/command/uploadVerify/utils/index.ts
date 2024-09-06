@@ -25,7 +25,7 @@ export const getUploadInfoRoot = () => {
 
   /* 创建空文件 */
   if (!extra.existsSync(rootPath)) {
-    extra.writeJSON(rootPath, {});
+    extra.writeJSONSync(rootPath, {});
   }
   return rootPath;
 };

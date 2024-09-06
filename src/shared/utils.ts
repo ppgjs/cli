@@ -8,7 +8,7 @@ import { logError, logSuccess } from './log';
  * @return {Promise} 时间完成之后的
  */
 export const sleep = (delay = 1000) => {
-  return new Promise(res => {
+  return new Promise((res) => {
     setTimeout(() => {
       res('睡眠完成');
     }, delay);
@@ -21,7 +21,7 @@ export function exitWithSuccess(wait = true) {
     logSuccess('cli执行完成');
     return '脚本执行完成';
   }
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     // 监听键盘输入
     process.stdin.setRawMode(true);
     process.stdin.resume();
@@ -53,8 +53,11 @@ export function exitWithError() {
  * @param {*} autoAccidentExitCallFun 程序指定异常退出(非手动退出) 是否执行该函数
  * @return {*}
  */
-export function watchProcessAccident(callback: () => void, autoAccidentExitCallFun = false) {
-  process.on('exit', async code => {
+export function watchProcessAccident(
+  callback: () => void,
+  autoAccidentExitCallFun = false
+) {
+  process.on('exit', async (code) => {
     if (code !== 0) {
       // 异常退出
       if (autoAccidentExitCallFun) await callback();
@@ -75,10 +78,14 @@ export const getPackageJsonAttr = async (options: LoadConfigOptions) => {
     const keys = (
       Array.isArray(options.packageJson)
         ? options.packageJson
-        : [typeof options.packageJson === 'string' ? options.packageJson : options.name]
-    ).filter(t => t && typeof t === 'string') as string[];
-    const pkgJsonFile = await readPackageJSON(options.cwd).catch(e => {
-      console.warn('read package.json error => ', e);
+        : [
+            typeof options.packageJson === 'string'
+              ? options.packageJson
+              : options.name,
+          ]
+    ).filter((t) => t && typeof t === 'string') as string[];
+    const pkgJsonFile = await readPackageJSON(options.cwd).catch((e) => {
+      // console.warn('read package.json error => ', e);
     });
     if (pkgJsonFile) {
       const values: Record<string, any> = {};
