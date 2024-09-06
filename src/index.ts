@@ -6,11 +6,22 @@ import { loadCliOptions } from './config';
 import type { CliOption, EGitVersionActionType } from './types/index';
 
 import { version } from '../package.json';
-import { getVersion, gitCommit, gitCommitVerify, openStore, release } from './command';
-import { backToOriginalBranch, deleteTag, PingPort as pingPort } from './gitActionCommon';
+import {
+  getVersion,
+  gitCommit,
+  gitCommitVerify,
+  openStore,
+  release,
+} from './command';
+import {
+  backToOriginalBranch,
+  deleteTag,
+  PingPort as pingPort,
+} from './gitActionCommon';
 
 import { exitWithError, logWarn } from './shared';
 import UploadVerifyFile from './command/uploadVerify/index';
+import { EPlatForm } from './command/uploadVerify/utils';
 
 type CommandName =
   | 'git-commit'
@@ -19,10 +30,15 @@ type CommandName =
   | 'ping [ip]'
   | 'delete-tag [tagName]'
   | 'git-version [actionType]'
-  | 'public-verify [fileRoot]'
+  | 'public-verify-vx [fileRoot]'
+  | 'public-verify-ali [fileRoot]'
+  | 'public-static [fileRoot]'
   | 'release';
 
-type CommandActions<T extends object> = (args: T, options: Record<string, any>) => Promise<void> | void;
+type CommandActions<T extends object> = (
+  args: T,
+  options: Record<string, any>
+) => Promise<void> | void;
 
 type CommandWithAction<A extends object = object> = Record<
   CommandName,
@@ -49,7 +65,10 @@ async function setupCli() {
       alias: 'gc',
       action: async () => {
         try {
-          await gitCommit(cliOptions.gitCommitTypes, cliOptions.gitCommitScopes);
+          await gitCommit(
+            cliOptions.gitCommitTypes,
+            cliOptions.gitCommitScopes
+          );
         } catch (error) {
           exitWithError();
         }
@@ -58,7 +77,7 @@ async function setupCli() {
     'git-version [actionType]': {
       desc: '版本分支操作',
       alias: 'gv',
-      action: async actionType => {
+      action: async (actionType) => {
         try {
           await getVersion(<EGitVersionActionType>(<unknown>actionType));
         } catch (error) {
@@ -78,7 +97,9 @@ async function setupCli() {
     'ping [ip]': {
       desc: 'ping ip/域名',
       alias: 'p',
-      options: [['-m, --more', 'Whether to ping multiple ips', { default: false }]],
+      options: [
+        ['-m, --more', 'Whether to ping multiple ips', { default: false }],
+      ],
       action: async (ip, options) => {
         await pingPort(options.more, <string>(<unknown>ip));
       },
@@ -86,16 +107,32 @@ async function setupCli() {
     'delete-tag [tagName]': {
       desc: '删除远程tag',
       alias: 'dt',
-      action: async tag => {
+      action: async (tag) => {
         await deleteTag(<string>(<unknown>tag));
       },
     },
-    'public-verify [fileRoot]': {
+    'public-verify-vx [fileRoot]': {
+      desc: '将校验文件发布到远程-微信',
+      alias: 'pvv',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.WEChAT);
+        await uploadVerifyFile.wxMain(<string>(<unknown>fileRoot));
+      },
+    },
+    'public-verify-ali [fileRoot]': {
+      desc: '将校验文件发布到远程-支付宝/抖音',
+      alias: 'pva',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.ALIPAY);
+        await uploadVerifyFile.aliMain(<string>(<unknown>fileRoot));
+      },
+    },
+    'public-static [fileRoot]': {
       desc: '将校验文件发布到远程',
-      alias: 'pv',
-      action: async fileRoot => {
-        const uploadVerifyFile = new UploadVerifyFile();
-        await uploadVerifyFile.main(<string>(<unknown>fileRoot));
+      alias: 'pva',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.STATIC);
+        await uploadVerifyFile.aliMain(<string>(<unknown>fileRoot));
       },
     },
     open: {
@@ -114,12 +151,13 @@ async function setupCli() {
     },
   };
 
-  for await (const [command, { options, desc, action, alias = command.replace(/\s.+/gi, '') }] of Object.entries(
-    commands
-  )) {
+  for await (const [
+    command,
+    { options, desc, action, alias = command.replace(/\s.+/gi, '') },
+  ] of Object.entries(commands)) {
     const commandItem = cli.command(command, desc).action(action).alias(alias);
     if (options && options.length) {
-      options.forEach(element => {
+      options.forEach((element) => {
         commandItem.option(...element);
       });
     }

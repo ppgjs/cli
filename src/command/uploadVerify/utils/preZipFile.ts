@@ -1,12 +1,20 @@
 import archiver from 'archiver';
-import { createReadStream, createWriteStream, existsSync, readdirSync, statSync } from 'fs';
+import {
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  readdirSync,
+  statSync,
+} from 'fs';
 import path from 'path';
 import { logError, logSuccess, sleep } from '../../../shared';
 
 export const ChcZipName = 'chc校验文件.zip';
+export const StaticZipName = 'static.zip';
 export const SaasZipName = 'saas.zip';
 
-export const prepareZipFile = async (filePath: string) => {
+//将整个目录压缩
+export const prepareDirFileZip = async (filePath: string, fileName: string) => {
   const outPutRoot = path.join(filePath, '..');
   const file = path.resolve(filePath);
   if (!existsSync(file)) {
@@ -14,14 +22,14 @@ export const prepareZipFile = async (filePath: string) => {
     return false;
   }
 
-  const saasOutput = createWriteStream(path.join(outPutRoot, SaasZipName));
+  const saasOutput = createWriteStream(path.join(outPutRoot, fileName));
 
   const archiveSaas = archiver('zip', {
     zlib: { level: 9 }, // 设置压缩级别
   });
 
   // 监听错误事件
-  archiveSaas.on('error', err => {
+  archiveSaas.on('error', (err) => {
     logError(` archiveSaas error-> ${JSON.stringify(err)}`);
     throw err;
   });
@@ -31,6 +39,16 @@ export const prepareZipFile = async (filePath: string) => {
   archiveSaas.pipe(saasOutput);
 
   archiveSaas.finalize(); // 完成压缩
+  await sleep();
+};
+
+export const prepareAliZipFile = async (filePath: string) => {
+  const outPutRoot = path.join(filePath, '..');
+  const file = path.resolve(filePath);
+  if (!existsSync(file)) {
+    logError(`${file}不存在`);
+    return false;
+  }
 
   const checkOutput = createWriteStream(path.join(outPutRoot, ChcZipName));
 
@@ -40,11 +58,13 @@ export const prepareZipFile = async (filePath: string) => {
 
   // 监听完成事件
   checkOutput.on('close', () => {
-    logSuccess(`校验文件 压缩包创建完成，文件大小: ${archiveCheck.pointer()} 字节`);
+    logSuccess(
+      `校验文件 压缩包创建完成，文件大小: ${archiveCheck.pointer()} 字节`
+    );
   });
 
   // 监听错误事件
-  archiveCheck.on('error', err => {
+  archiveCheck.on('error', (err) => {
     logError(` archiveCheck error-> ${JSON.stringify(err)}`);
     throw err;
   });
@@ -55,18 +75,20 @@ export const prepareZipFile = async (filePath: string) => {
   function addFilesToArchive(dir: string) {
     const files = readdirSync(dir);
 
-    files.forEach(file => {
+    files.forEach((file) => {
       const filePath = path.join(dir, file);
       const stat = statSync(filePath);
 
       if (stat.isDirectory()) {
         // 如果是目录，递归调用
         addFilesToArchive(filePath);
-      } else if (path.extname(file) === '.txt') {
+      } else if (['.html', '.txt'].includes(path.extname(file))) {
         if (fileNames.has(file)) return;
         fileNames.add(file);
         // 如果是.txt文件，添加到压缩包
-        archiveCheck.append(createReadStream(filePath), { name: path.basename(file) });
+        archiveCheck.append(createReadStream(filePath), {
+          name: path.basename(file),
+        });
       }
     });
   }
