@@ -1,0 +1,11 @@
+{
+  "tabWidth": 2,
+  "arrowParens": "always",
+  "alwaysParens": "always",
+  "trailingComma": "es5",
+  "htmlWhitespaceSensitivity": "strict",
+  "semi": true,
+  "singleQuote": true,
+  "printWidth": 80,
+  "bracketSameLine": true
+}

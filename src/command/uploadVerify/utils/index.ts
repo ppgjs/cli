@@ -3,10 +3,17 @@ import { logError } from '../../../shared';
 import extra from 'fs-extra';
 import Enquirer from 'enquirer';
 
+export enum EPlatForm {
+  'WEChAT', // 微信
+  'ALIPAY', // 支付宝
+  'STATIC', // 静态资源
+}
 
 export interface IUploadFileType {
-  fileRoot: string,
-  token: string
+  wxFileRoot: string;
+  aliFileRoot: string;
+  staticFileRoot: string;
+  token: string;
 }
 export const getUploadInfoRoot = () => {
   const systemDefaultPath = process.env.HOME;
@@ -20,26 +27,40 @@ export const getUploadInfoRoot = () => {
   if (!extra.existsSync(rootPath)) {
     extra.writeJSON(rootPath, {});
   }
-  return rootPath
-}
+  return rootPath;
+};
 
+export const initUploadInfo = () => {
+  const configFilePath = getUploadInfoRoot();
+  return extra.readJsonSync(configFilePath);
+};
 
-export const getFileRoot = async (wrapFileRoot?: string): Promise<string> => {
-  const configFilePath = getUploadInfoRoot()
-  const readUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath)
+const RootKeyMap = {
+  [EPlatForm.WEChAT]: 'wxFileRoot',
+  [EPlatForm.ALIPAY]: 'aliFileRoot',
+  [EPlatForm.STATIC]: 'staticFileRoot',
+};
+
+export const getFileRoot = async (
+  platefrom: EPlatForm,
+  wrapFileRoot?: string
+): Promise<string> => {
+  const configFilePath = getUploadInfoRoot();
+  const readUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath);
+  const rootKey = RootKeyMap[platefrom] as keyof IUploadFileType;
+
   if (wrapFileRoot && extra.existsSync(resolve(wrapFileRoot))) {
-    readUploadInfo.fileRoot = resolve(wrapFileRoot)
+    readUploadInfo[rootKey] = resolve(wrapFileRoot);
   } else if (wrapFileRoot) {
-    logError(`路径不存在 ${wrapFileRoot}`)
+    logError(`路径不存在 ${wrapFileRoot}`);
   }
 
-  if (!readUploadInfo.fileRoot) {
-    const { pathRoot } = await Enquirer.prompt<{ pathRoot: string; }>([
-      { name: 'pathRoot', type: 'text', message: '请输入路径', required: true }
+  if (!readUploadInfo[rootKey]) {
+    const { pathRoot } = await Enquirer.prompt<{ pathRoot: string }>([
+      { name: 'pathRoot', type: 'text', message: '请输入路径', required: true },
     ]);
-    return getFileRoot(pathRoot)
+    return getFileRoot(platefrom, pathRoot);
   }
 
-
-  return readUploadInfo.fileRoot
-}
+  return readUploadInfo[rootKey];
+};
