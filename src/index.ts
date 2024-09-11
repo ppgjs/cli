@@ -132,7 +132,7 @@ async function setupCli() {
       alias: 'ps',
       action: async (fileRoot) => {
         const uploadVerifyFile = new UploadVerifyFile(EPlatForm.STATIC);
-        await uploadVerifyFile.aliMain(<string>(<unknown>fileRoot));
+        await uploadVerifyFile.staticMain(<string>(<unknown>fileRoot));
       },
     },
     open: {

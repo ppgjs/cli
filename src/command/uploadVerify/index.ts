@@ -168,6 +168,7 @@ export default class UploadVerifyFile {
           uploadResult
         )}`
       );
+      console.log('🏷️ index.ts ~ 172 => ', uploadResult)
       throw new Error('上传失败');
     } else {
       logSuccess(`${uploadInfo.name} 上传成功`);
