@@ -168,7 +168,7 @@ export default class UploadVerifyFile {
           uploadResult
         )}`
       );
-      console.log('🏷️ index.ts ~ 172 => ', uploadResult)
+      console.log('🏷️ index.ts ~ error => ', uploadResult);
       throw new Error('上传失败');
     } else {
       logSuccess(`${uploadInfo.name} 上传成功`);
@@ -298,7 +298,7 @@ export default class UploadVerifyFile {
 
     this.publishFileRoot = path.join(this.localUploadInfo.aliFileRoot, '..');
 
-    await prepareDirFileZip(this.localUploadInfo.wxFileRoot, SaasZipName);
+    await prepareDirFileZip(this.localUploadInfo.staticFileRoot, StaticZipName);
 
     const configFilePath = getUploadInfoRoot();
     const localUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath);
@@ -308,7 +308,6 @@ export default class UploadVerifyFile {
     const staticInfo = UploadProjectList.find((item) => item.id === 36)!;
 
     if (!staticInfo) throw new Error('未找到静态资源项目');
-
     const { desc } = await Enquirer.prompt<{ desc: string }>([
       {
         name: 'desc',

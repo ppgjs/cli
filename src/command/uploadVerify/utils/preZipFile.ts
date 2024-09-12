@@ -34,9 +34,24 @@ export const prepareDirFileZip = async (filePath: string, fileName: string) => {
     throw err;
   });
 
-  archiveSaas.directory(file, 'saas');
+  // 监听完成事件
+  saasOutput.on('close', () => {
+    logSuccess(
+      `文件 压缩包创建完成，文件大小: ${archiveSaas.pointer()} 字节`
+    );
+  });
+
+  // 监听错误事件
+  saasOutput.on('error', (err) => {
+    logError(` archive zip error-> ${JSON.stringify(err)}`);
+    throw err;
+  });
+
   // 连接输出流到压缩工具
   archiveSaas.pipe(saasOutput);
+  if (!fileName.split('.')[0]) throw '没有文件名称';
+
+  archiveSaas.directory(file, fileName.split('.')[0]);
 
   archiveSaas.finalize(); // 完成压缩
   await sleep();
