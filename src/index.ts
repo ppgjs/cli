@@ -33,6 +33,8 @@ type CommandName =
   | 'public-verify-vx [fileRoot]'
   | 'public-verify-ali [fileRoot]'
   | 'public-static [fileRoot]'
+  | 'public-ploperator [fileRoot]'
+  | 'public-merchant [fileRoot]'
   | 'release';
 
 type CommandActions<T extends object> = (
@@ -133,6 +135,22 @@ async function setupCli() {
       action: async (fileRoot) => {
         const uploadVerifyFile = new UploadVerifyFile(EPlatForm.STATIC);
         await uploadVerifyFile.staticMain(<string>(<unknown>fileRoot));
+      },
+    },
+    'public-ploperator [fileRoot]': {
+      desc: '部署综合运营系统',
+      alias: 'ppl',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.PL_OPERATOR);
+        await uploadVerifyFile.plOperatorMain(<string>(<unknown>fileRoot));
+      },
+    },
+    'public-merchant [fileRoot]': {
+      desc: '部署SaaS商户后台',
+      alias: 'ppm',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.SAAS_MERCHANT);
+        await uploadVerifyFile.saasMerchantMain(<string>(<unknown>fileRoot));
       },
     },
     open: {

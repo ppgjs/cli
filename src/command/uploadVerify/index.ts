@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from 'axios';
 import Enquirer from 'enquirer';
 import FormData from 'form-data';
-import extra, { readFileSync, writeJson } from 'fs-extra';
+import extra, { readFileSync, readdirSync, writeJson } from 'fs-extra';
 import path from 'path';
 import { inc } from 'semver';
 import { logError, logInfo, logSuccess } from '../../shared';
@@ -28,7 +28,8 @@ type IUploadBaseConfig = {
   uploadZipFileName:
     | typeof ChcZipName
     | typeof SaasZipName
-    | typeof StaticZipName;
+    | typeof StaticZipName
+    | string;
   uploadDesc: string;
 };
 type IUploadToastConfig = IUploadBaseConfig & {
@@ -40,6 +41,8 @@ const UploadIdMap = {
   [EPlatForm.WEChAT]: [49, 48, 41],
   [EPlatForm.ALIPAY]: [49, 48],
   [EPlatForm.STATIC]: [36],
+  [EPlatForm.PL_OPERATOR]: [52],
+  [EPlatForm.SAAS_MERCHANT]: [41],
 };
 
 const UploadProjectList: IUploadBaseConfig[] = [
@@ -71,6 +74,13 @@ const UploadProjectList: IUploadBaseConfig[] = [
     productName: 'fhdostatic',
     uploadDesc: '图片上传',
     uploadZipFileName: StaticZipName,
+  },
+  {
+    id: 52,
+    name: '寄递运营系统',
+    productName: 'ploperator',
+    uploadDesc: '部署综合运营系统',
+    uploadZipFileName: '',
   },
 ];
 
@@ -139,10 +149,17 @@ export default class UploadVerifyFile {
     /* 上传 */
 
     const formData = new FormData();
+    if (!uploadInfo.uploadZipFileName.trim()) {
+      throw new Error('文件名为空');
+    }
+
     const filePath = path.join(
       this.publishFileRoot,
       uploadInfo.uploadZipFileName
     );
+
+    // return;
+
     const bufferData = readFileSync(filePath);
     formData.append('files[]', bufferData, {
       filename: uploadInfo.uploadZipFileName.split('.')[0],
@@ -314,11 +331,125 @@ export default class UploadVerifyFile {
         type: 'text',
         message: '请输入上传描述信息',
         required: true,
-        initial: staticInfo,
+        initial: staticInfo.uploadDesc,
       },
     ]);
 
     staticInfo.uploadDesc = desc;
+
+    await this.uploadEntry();
+
+    logInfo('上传完成了!');
+  }
+
+  // 综合运营系统上传
+  async plOperatorMain(fileRoot?: string) {
+    this.localUploadInfo.ploperatorFileRoot = await getFileRoot(
+      this.currentPlatfrom,
+      fileRoot
+    );
+    const fileArr = readdirSync(
+      path.resolve(this.localUploadInfo.ploperatorFileRoot)
+    );
+
+    if (!fileArr.length) {
+      return logError(
+        `${this.localUploadInfo.ploperatorFileRoot} 目录下没有文件`
+      );
+    }
+
+    this.publishFileRoot = path.resolve(
+      this.localUploadInfo.ploperatorFileRoot
+    );
+
+    const configFilePath = getUploadInfoRoot();
+    const localUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath);
+
+    await this.initToken(localUploadInfo.token);
+
+    const staticInfo = UploadProjectList.find((item) => item.id === 52)!;
+
+    if (!staticInfo) throw new Error('未找到静态资源项目');
+
+    const { fileName, desc } = await Enquirer.prompt<{
+      fileName: any;
+      desc: string;
+    }>([
+      {
+        name: 'fileName',
+        type: 'select',
+        message: '请选择上传的压缩包',
+        required: true,
+        choices: fileArr,
+      },
+      {
+        name: 'desc',
+        type: 'text',
+        message: '请输入发布描述信息',
+        required: true,
+        initial: "发布SaaS商户后台",
+      },
+    ]);
+
+    staticInfo.uploadDesc = desc;
+    staticInfo.uploadZipFileName = fileName;
+
+    await this.uploadEntry();
+
+    logInfo('上传完成了!');
+  }
+
+  // SaaS商户后台上传
+  async saasMerchantMain(fileRoot?: string) {
+    this.localUploadInfo.saasMerchantFileRoot = await getFileRoot(
+      this.currentPlatfrom,
+      fileRoot
+    );
+    const fileArr = readdirSync(
+      path.resolve(this.localUploadInfo.saasMerchantFileRoot)
+    );
+
+    if (!fileArr.length) {
+      return logError(
+        `${this.localUploadInfo.saasMerchantFileRoot} 目录下没有文件`
+      );
+    }
+
+    this.publishFileRoot = path.resolve(
+      this.localUploadInfo.saasMerchantFileRoot
+    );
+
+    const configFilePath = getUploadInfoRoot();
+    const localUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath);
+
+    await this.initToken(localUploadInfo.token);
+
+    const staticInfo = UploadProjectList.find((item) => item.id === 41)!;
+
+    if (!staticInfo) throw new Error('未找到静态资源项目');
+
+    const { fileName, desc } = await Enquirer.prompt<{
+      fileName: any;
+      desc: string;
+    }>([
+      {
+        name: 'fileName',
+        type: 'select',
+        message: '请选择上传的压缩包',
+        required: true,
+        choices: fileArr,
+      },
+      {
+        name: 'desc',
+        type: 'text',
+        message: '请输入发布描述信息',
+        required: true,
+        initial: "发布SaaS商户后台",
+      },
+    ]);
+
+    staticInfo.uploadDesc = desc;
+    staticInfo.uploadZipFileName = fileName;
 
     await this.uploadEntry();
 

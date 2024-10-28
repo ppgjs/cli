@@ -7,12 +7,16 @@ export enum EPlatForm {
   'WEChAT', // 微信
   'ALIPAY', // 支付宝
   'STATIC', // 静态资源
+  'PL_OPERATOR', // 静态资源
+  'SAAS_MERCHANT', // 静态资源
 }
 
 export interface IUploadFileType {
   wxFileRoot: string;
   aliFileRoot: string;
   staticFileRoot: string;
+  ploperatorFileRoot: string;
+  saasMerchantFileRoot: string;
   token: string;
 }
 export const getUploadInfoRoot = () => {
@@ -39,6 +43,8 @@ const RootKeyMap = {
   [EPlatForm.WEChAT]: 'wxFileRoot',
   [EPlatForm.ALIPAY]: 'aliFileRoot',
   [EPlatForm.STATIC]: 'staticFileRoot',
+  [EPlatForm.PL_OPERATOR]: 'ploperatorFileRoot',
+  [EPlatForm.SAAS_MERCHANT]: 'saasMerchantFileRoot',
 };
 
 export const getFileRoot = async (
