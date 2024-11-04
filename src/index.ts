@@ -130,7 +130,7 @@ async function setupCli() {
       },
     },
     'public-static [fileRoot]': {
-      desc: '将校验文件发布到远程',
+      desc: '将寄递静态资源发布到远程',
       alias: 'ps',
       action: async (fileRoot) => {
         const uploadVerifyFile = new UploadVerifyFile(EPlatForm.STATIC);

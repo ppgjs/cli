@@ -387,7 +387,7 @@ export default class UploadVerifyFile {
         type: 'text',
         message: '请输入发布描述信息',
         required: true,
-        initial: "发布综合运营系统",
+        initial: '发布综合运营系统',
       },
     ]);
 
@@ -444,7 +444,7 @@ export default class UploadVerifyFile {
         type: 'text',
         message: '请输入发布描述信息',
         required: true,
-        initial: "发布SaaS商户后台",
+        initial: '发布SaaS商户后台',
       },
     ]);
 
