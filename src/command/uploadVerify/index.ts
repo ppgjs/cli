@@ -356,13 +356,11 @@ export default class UploadVerifyFile {
       this.currentPlatfrom,
       fileRoot
     );
-    console.log('🏷️ index.ts ~ 359 => ', this.localUploadInfo.adStaticFileRoot)
 
     this.publishFileRoot = path.join(
       this.localUploadInfo.adStaticFileRoot,
       '..'
     );
-    console.log('🏷️ index.ts ~ 365 => ', this.publishFileRoot)
 
     await prepareDirFileZip(
       this.localUploadInfo.adStaticFileRoot,
