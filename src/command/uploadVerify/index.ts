@@ -18,6 +18,7 @@ import {
   StaticZipName,
   prepareAliZipFile,
   prepareDirFileZip,
+  welfareZipName,
 } from './utils/preZipFile';
 import { FileUploadAxios, IResponse } from './utils/uploadRequest';
 
@@ -43,6 +44,7 @@ const UploadIdMap = {
   [EPlatForm.STATIC]: [36],
   [EPlatForm.PL_OPERATOR]: [52],
   [EPlatForm.SAAS_MERCHANT]: [41],
+  [EPlatForm.AD_STATIC]: [37],
 };
 
 const UploadProjectList: IUploadBaseConfig[] = [
@@ -81,6 +83,13 @@ const UploadProjectList: IUploadBaseConfig[] = [
     productName: 'ploperator',
     uploadDesc: '部署综合运营系统',
     uploadZipFileName: '',
+  },
+  {
+    id: 37,
+    name: '广告静态资源',
+    productName: 'fhdostatic',
+    uploadDesc: '图片上传',
+    uploadZipFileName: welfareZipName,
   },
 ];
 
@@ -323,6 +332,49 @@ export default class UploadVerifyFile {
     await this.initToken(localUploadInfo.token);
 
     const staticInfo = UploadProjectList.find((item) => item.id === 36)!;
+
+    if (!staticInfo) throw new Error('未找到静态资源项目');
+    const { desc } = await Enquirer.prompt<{ desc: string }>([
+      {
+        name: 'desc',
+        type: 'text',
+        message: '请输入上传描述信息',
+        required: true,
+        initial: staticInfo.uploadDesc,
+      },
+    ]);
+
+    staticInfo.uploadDesc = desc;
+
+    await this.uploadEntry();
+
+    logInfo('上传完成了!');
+  }
+  // 广告静态资源上传
+  async staticAdMain(fileRoot?: string) {
+    this.localUploadInfo.adStaticFileRoot = await getFileRoot(
+      this.currentPlatfrom,
+      fileRoot
+    );
+    console.log('🏷️ index.ts ~ 359 => ', this.localUploadInfo.adStaticFileRoot)
+
+    this.publishFileRoot = path.join(
+      this.localUploadInfo.adStaticFileRoot,
+      '..'
+    );
+    console.log('🏷️ index.ts ~ 365 => ', this.publishFileRoot)
+
+    await prepareDirFileZip(
+      this.localUploadInfo.adStaticFileRoot,
+      welfareZipName
+    );
+
+    const configFilePath = getUploadInfoRoot();
+    const localUploadInfo: IUploadFileType = extra.readJsonSync(configFilePath);
+
+    await this.initToken(localUploadInfo.token);
+
+    const staticInfo = UploadProjectList.find((item) => item.id === 37)!;
 
     if (!staticInfo) throw new Error('未找到静态资源项目');
     const { desc } = await Enquirer.prompt<{ desc: string }>([

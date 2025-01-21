@@ -33,6 +33,7 @@ type CommandName =
   | 'public-verify-vx [fileRoot]'
   | 'public-verify-ali [fileRoot]'
   | 'public-static [fileRoot]'
+  | 'public-ad [fileRoot]'
   | 'public-ploperator [fileRoot]'
   | 'public-merchant [fileRoot]'
   | 'release';
@@ -135,6 +136,14 @@ async function setupCli() {
       action: async (fileRoot) => {
         const uploadVerifyFile = new UploadVerifyFile(EPlatForm.STATIC);
         await uploadVerifyFile.staticMain(<string>(<unknown>fileRoot));
+      },
+    },
+    'public-ad [fileRoot]': {
+      desc: '将广告态资源发布到远程',
+      alias: 'pa',
+      action: async (fileRoot) => {
+        const uploadVerifyFile = new UploadVerifyFile(EPlatForm.AD_STATIC);
+        await uploadVerifyFile.staticAdMain(<string>(<unknown>fileRoot));
       },
     },
     'public-ploperator [fileRoot]': {

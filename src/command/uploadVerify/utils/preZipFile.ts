@@ -11,6 +11,7 @@ import { logError, logSuccess, sleep } from '../../../shared';
 
 export const ChcZipName = 'chc校验文件.zip';
 export const StaticZipName = 'static.zip';
+export const welfareZipName = 'welfare.zip';
 export const SaasZipName = 'saas.zip';
 
 //将整个目录压缩
@@ -36,14 +37,12 @@ export const prepareDirFileZip = async (filePath: string, fileName: string) => {
 
   // 监听完成事件
   saasOutput.on('close', () => {
-    logSuccess(
-      `文件 压缩包创建完成，文件大小: ${archiveSaas.pointer()} 字节`
-    );
+    logSuccess(`文件 压缩包创建完成，文件大小: ${archiveSaas.pointer()} 字节`);
   });
 
   // 监听错误事件
   saasOutput.on('error', (err) => {
-    logError(` archive zip error-> ${JSON.stringify(err)}`);
+       logError(` archive zip error-> ${JSON.stringify(err)}`);
     throw err;
   });
 
