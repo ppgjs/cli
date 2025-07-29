@@ -1,6 +1,6 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "description": "PpgJs's command line tools",
   "author": {
     "name": "BoycePan",
@@ -72,7 +72,7 @@
     "archiver": "^7.0.1",
     "axios": "^1.6.8",
     "bumpp": "9.2.0",
-    "c12": "^1.10.0",
+    "c12": "1.10.0",
     "cac": "^6.7.14",
     "cli-spinners": "^2.9.1",
     "dayjs": "^1.11.10",

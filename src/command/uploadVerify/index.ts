@@ -117,24 +117,29 @@ export default class UploadVerifyFile {
       throw new Error('获取上传配置失败');
     }
 
-    const uploadInfoList = UploadProjectList.map((item): IUploadToastConfig => {
-      const onlineConfig = projectList.find(
-        (project: any) => project.id === item.id
-      );
-      if (!onlineConfig?.lastStaticResourcePublishLog?.version) {
-        throw new Error(`${item.name} 线上配置不存在`);
+    const uploadInfoList = UploadProjectList.map(
+      (item): IUploadToastConfig | false => {
+        const onlineConfig = projectList.find(
+          (project: any) => project.id === item.id
+        );
+        if (!onlineConfig?.lastStaticResourcePublishLog?.version) {
+          console.info('线上配置不存在:', item.name, ',id:', item.id);
+
+          return false;
+        }
+
+        const { version: oldPublishVersion } =
+          onlineConfig?.lastStaticResourcePublishLog || {};
+        const newPublishVersion = inc(oldPublishVersion, 'patch') || '';
+
+        return {
+          ...item,
+          oldPublishVersion,
+          newPublishVersion,
+        };
       }
+    ).filter(Boolean) as IUploadToastConfig[];
 
-      const { version: oldPublishVersion } =
-        onlineConfig?.lastStaticResourcePublishLog || {};
-      const newPublishVersion = inc(oldPublishVersion, 'patch') || '';
-
-      return {
-        ...item,
-        oldPublishVersion,
-        newPublishVersion,
-      };
-    });
     this.uploadInfoList = uploadInfoList;
   };
 
