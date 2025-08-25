@@ -322,7 +322,7 @@ export default class UploadVerifyFile {
       fileRoot
     );
 
-    this.publishFileRoot = path.join(this.localUploadInfo.aliFileRoot, '..');
+    this.publishFileRoot = path.join(this.localUploadInfo.staticFileRoot, '..');
 
     await prepareDirFileZip(this.localUploadInfo.staticFileRoot, StaticZipName);
 
