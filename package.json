@@ -1,6 +1,6 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "description": "PpgJs's command line tools",
   "author": {
     "name": "BoycePan",
