@@ -50,7 +50,17 @@ export const prepareDirFileZip = async (filePath: string, fileName: string) => {
   archiveSaas.pipe(saasOutput);
   if (!fileName.split('.')[0]) throw '没有文件名称';
 
-  archiveSaas.directory(file, fileName.split('.')[0]);
+  archiveSaas.directory(file, fileName.split('.')[0], (entry: archiver.EntryData) => {
+    const parts = entry.name.split(/[/\\]/);
+    if (
+      parts.includes('.git') ||
+      parts.includes('.gitignore') ||
+      parts.includes('.gitattributes')
+    ) {
+      return false;
+    }
+    return entry;
+  });
 
   archiveSaas.finalize(); // 完成压缩
   await sleep();
@@ -90,6 +100,13 @@ export const prepareAliZipFile = async (filePath: string) => {
     const files = readdirSync(dir);
 
     files.forEach((file) => {
+      if (
+        file === '.git' ||
+        file === '.gitignore' ||
+        file === '.gitattributes'
+      ) {
+        return;
+      }
       const filePath = path.join(dir, file);
       const stat = statSync(filePath);
 
