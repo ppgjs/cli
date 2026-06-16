@@ -529,10 +529,8 @@ export default class UploadVerifyFile {
   }
 
   private printUpdatedImages = async (uploadInfo: IUploadToastConfig) => {
-    console.log('🏷️ index.ts ~ 532 => ', !this.currentFileRoot || !uploadInfo.path)
     if (!this.currentFileRoot || !uploadInfo.path) return;
 
-    console.log('🏷️ index.ts ~ 534 => ', 123)
     // 自动进行 Git 提交
     await this.autoGitCommit(uploadInfo);
 
