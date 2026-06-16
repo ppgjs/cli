@@ -190,52 +190,52 @@ export default class UploadVerifyFile {
     });
     formData.append('token', uploadToken);
 
-    // const config: AxiosRequestConfig = {
-    //   headers: {
-    //     Referer: 'https://oss.fhd001.com/',
-    //     Origin: 'https://oss.fhd001.com',
-    //   },
-    // };
-    // const {
-    //   data: { data: uploadResult, isSuccess: uploadIsSuccess },
-    // } = await this.uploadRequest.axiosInstance.post<IResponse>(
-    //   'https://download.fhd001.com/upload',
-    //   formData,
-    //   config
-    // );
-    // if (!uploadIsSuccess) {
-    //   logError(
-    //     `${uploadInfo.name} 上传失败 errorinfo -> ${JSON.stringify(
-    //       uploadResult
-    //     )}`
-    //   );
-    //   console.log('🏷️ index.ts ~ error => ', uploadResult);
-    //   throw new Error('上传失败');
-    // } else {
-    //   logSuccess(`${uploadInfo.name} 上传成功`);
-    // }
+    const config: AxiosRequestConfig = {
+      headers: {
+        Referer: 'https://oss.fhd001.com/',
+        Origin: 'https://oss.fhd001.com',
+      },
+    };
+    const {
+      data: { data: uploadResult, isSuccess: uploadIsSuccess },
+    } = await this.uploadRequest.axiosInstance.post<IResponse>(
+      'https://download.fhd001.com/upload',
+      formData,
+      config
+    );
+    if (!uploadIsSuccess) {
+      logError(
+        `${uploadInfo.name} 上传失败 errorinfo -> ${JSON.stringify(
+          uploadResult
+        )}`
+      );
+      console.log('🏷️ index.ts ~ error => ', uploadResult);
+      throw new Error('上传失败');
+    } else {
+      logSuccess(`${uploadInfo.name} 上传成功`);
+    }
 
-    // // /* 发布 */
-    // const {
-    //   data: { data: publicResult, isSuccess: publicIsSuccess },
-    // } = await this.uploadRequest.axiosInstance.post<IResponse>(
-    //   'https://mgrapi.fhd001.com/mgr/rdc/staticResource/staticResourcePublish.do',
-    //   {
-    //     staticResourceDirectoryId: uploadInfo.id,
-    //     version: uploadInfo.newPublishVersion,
-    //     description: uploadInfo.uploadDesc,
-    //     ossFilePath: uploadResult,
-    //   }
-    // );
-    // if (!publicIsSuccess) {
-    //   logError(
-    //     `${uploadInfo.name} 发布失败 errorinfo -> ${JSON.stringify(
-    //       publicResult
-    //     )}`
-    //   );
-    //   throw new Error('发布失败');
-    // }
-    // logSuccess(`${uploadInfo.name} 发布成功`);
+    // /* 发布 */
+    const {
+      data: { data: publicResult, isSuccess: publicIsSuccess },
+    } = await this.uploadRequest.axiosInstance.post<IResponse>(
+      'https://mgrapi.fhd001.com/mgr/rdc/staticResource/staticResourcePublish.do',
+      {
+        staticResourceDirectoryId: uploadInfo.id,
+        version: uploadInfo.newPublishVersion,
+        description: uploadInfo.uploadDesc,
+        ossFilePath: uploadResult,
+      }
+    );
+    if (!publicIsSuccess) {
+      logError(
+        `${uploadInfo.name} 发布失败 errorinfo -> ${JSON.stringify(
+          publicResult
+        )}`
+      );
+      throw new Error('发布失败');
+    }
+    logSuccess(`${uploadInfo.name} 发布成功`);
     await this.printUpdatedImages(uploadInfo);
   };
 
