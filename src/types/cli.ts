@@ -39,6 +39,14 @@ export interface CliOption {
    * lint-staged config
    */
   lintStagedConfig: Record<string, string | string[]>;
+  /**
+   * gitlab url
+   */
+  gitlabUrl?: string;
+  /**
+   * git remote name
+   */
+  useRemote?: string;
 }
 
 export interface EnquirerBasePromptOptions {

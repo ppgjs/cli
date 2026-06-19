@@ -3,7 +3,8 @@ import { glob } from 'fast-glob';
 import { copyFileSync, existsSync, writeFileSync } from 'fs-extra';
 import { join, resolve } from 'path';
 import { format } from 'prettier';
-import { createMkdir, execCommand, logError, logHint, logInfo, readStaticTemplateFileSync } from '../shared';
+import os from 'os';
+import { logError, logHint, logInfo, readStaticTemplateFileSync } from '../shared';
 import { versionInfo } from './version-info';
 
 /**
@@ -58,20 +59,9 @@ export async function openUpdateMdFile() {
 export async function openAndClearUpdateMdFile() {
   const files = await glob(['**/doc/update.md'], { ignore: ['**/node_modules/**'] });
   if (!files.length) return;
-  const system = await execCommand('uname');
   const originFilePath = resolve(process.cwd(), files[0]);
-  let tempFile = '';
+  const tempFile = resolve(os.tmpdir(), `${versionInfo.projectName}.${versionInfo.versionNumber}.update.md`);
 
-  if (system === 'Darwin') {
-    // mac
-    tempFile = resolve(`/tmp/${versionInfo.projectName}.${versionInfo.versionNumber}.update.md`);
-    copyFileSync(originFilePath, tempFile);
-  } else {
-    // window
-    const tempDir = 'C:/tmp';
-    createMkdir(tempDir);
-    tempFile = join(tempDir, `./${versionInfo.projectName}.${versionInfo.versionNumber}.update.md`);
-  }
   copyFileSync(originFilePath, tempFile);
   await createUpdateMdFile();
   const open = await import('open');

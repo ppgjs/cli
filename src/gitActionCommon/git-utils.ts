@@ -130,7 +130,7 @@ export function readGitlabToken({ showError } = { showError: true }): string {
   } catch (error) {
     logError(`没有找到 ${gitlabTokenPath} 文件`);
     logWarn(`请创建并写在 ${systemDefaultPath} 目录下的 ${TOKEN_FILE_NAME} 文件中，内容为GitLab个人访问令牌`);
-    logInfo('导航链接: http://git.rantron.biz:3002/-/profile/personal_access_tokens');
+    logInfo(`导航链接: ${GitInfo.gitlabUrl}/-/profile/personal_access_tokens`);
     return '';
   }
   let gitlabToken = '';
@@ -179,7 +179,7 @@ export async function getGitlabProjectId() {
   
     try {
       const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
-      const result = await axios.get(`http://git.rantron.biz:3002/api/v4/projects?search=${projectName}`);
+      const result = await axios.get(`${GitInfo.gitlabUrl}/api/v4/projects?search=${projectName}`);
       const parseData = JSON.parse(result.data);
       const projectId = parseData?.[0]?.id;
       if (projectId) return projectId;
@@ -208,7 +208,7 @@ export async function getGitlabLaunchMergeRequestByProjectId({
   try {
     const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
     const result = await axios.post(
-      `http://git.rantron.biz:3002/api/v4/projects/${projectId}/merge_requests`,
+      `${GitInfo.gitlabUrl}/api/v4/projects/${projectId}/merge_requests`,
       stringify({
         source_branch: originBranch,
         target_branch: targetBranch,
@@ -223,12 +223,17 @@ export async function getGitlabLaunchMergeRequestByProjectId({
       return true;
     } else if (parseData.message) {
       console.log(`${kolorist.red('请求合并发生错误，')}${kolorist.lightMagenta(`错误信息：${parseData.message}`)}`);
+      if (result.status === 401 || parseData.message.includes('Unauthorized')) {
+        deleteGitlabToken();
+      }
     } else {
       throw parseData;
     }
   } catch (error: any) {
     console.log('🏷️ ~ getGitlabLaunchMergeRequestByProjectId error:', error);
-    deleteGitlabToken();
+    if (error?.response?.status === 401) {
+      deleteGitlabToken();
+    }
     logError(error);
   }
   return false;
@@ -687,7 +692,7 @@ export async function gitlabApiDeleteBranch(branchName: string): Promise<boolean
     const gitlabToken = await readGitlabToken();
     const axios = new Axios({ headers: { 'PRIVATE-TOKEN': gitlabToken } });
     await axios.delete(
-      `http://git.rantron.biz:3002/api/v4/projects/${projectId}/repository/branches/${encodeURIComponent(branchName)}`
+      `${GitInfo.gitlabUrl}/api/v4/projects/${projectId}/repository/branches/${encodeURIComponent(branchName)}`
     );
     await execCommand('git', ['remote', 'update', GitInfo.useRemote, '--prune']);
     return true;

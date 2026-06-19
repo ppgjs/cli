@@ -58,7 +58,7 @@ class TerminalLog {
   }
 
   FailEnd(failText: string) {
-    if (this.spinner) this.spinner.fail(`${failText}😄`);
+    if (this.spinner) this.spinner.fail(`${failText}❌`);
     this.end();
   }
 

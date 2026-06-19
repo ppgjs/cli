@@ -2,7 +2,7 @@
 
 import type { Command } from 'cac';
 import cac from 'cac';
-import { loadCliOptions } from './config';
+import { loadCliOptions, updateGitlabUrl, updateRemote } from './config';
 import type { CliOption, EGitVersionActionType } from './types/index';
 
 import { version } from '../package.json';
@@ -57,6 +57,13 @@ interface CommandArg {
 }
 async function setupCli() {
   const cliOptions = await loadCliOptions();
+
+  if (cliOptions.useRemote) {
+    updateRemote(cliOptions.useRemote);
+  }
+  if (cliOptions.gitlabUrl) {
+    updateGitlabUrl(cliOptions.gitlabUrl);
+  }
 
   const cli = cac('ppg');
 

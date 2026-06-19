@@ -62,17 +62,6 @@ const pingIP = (ipStr: string) => {
 // 解析ip主机名
 const parseIpHostname = (ipStr: string) => {
   return Promise.resolve('');
-  if (!verifyIpv4(ipStr)) return Promise.resolve('');
-  return new Promise(res => {
-    // dns.reverse(ipStr, (err, hostnames) => {
-    dns.lookupService(ipStr, 80, (err, hostnames) => {
-      if (err) {
-        res('');
-      } else {
-        res(`主机名是: ${kolorist.lightCyan(hostnames)}`);
-      }
-    });
-  });
 };
 
 const pingIpAndHostname = async (ipStr: string) => {
@@ -98,10 +87,21 @@ export async function PingPort(pingScope: boolean, ipOrDomain: string = '') {
     // 将IP地址范围转换为数字数组以便遍历
     const startIPArray = startIp.split('.').map(Number);
     const endIPArray = endIp.split('.').map(Number);
+
+    if (
+      startIPArray[0] !== endIPArray[0] ||
+      startIPArray[1] !== endIPArray[1] ||
+      startIPArray[2] !== endIPArray[2]
+    ) {
+      throw new Error('仅支持在同一个子网 (前三段IP相同) 内进行范围 ping');
+    }
+
     const ResultArr: Promise<any>[] = [];
+    const min = Math.min(startIPArray[3], endIPArray[3]);
+    const max = Math.max(startIPArray[3], endIPArray[3]);
 
     // 遍历IP地址范围并执行ping操作
-    for (let i = startIPArray[3]; i <= endIPArray[3]; i += 1) {
+    for (let i = min; i <= max; i += 1) {
       const currentIPArray = [...startIPArray];
       currentIPArray[3] = i;
       ResultArr.push(pingIP(currentIPArray.join('.')));

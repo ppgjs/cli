@@ -35,9 +35,9 @@ export class FileUploadAxios {
     });
 
     this.axiosInstance.interceptors.response.use(response => {
-      const data = JSON.parse(response.data || '{}');
-      const isSuccess = data.rcode === 0;
-      return { ...response, data: { ...(data || {}), isSuccess } };
+      const rawData = typeof response.data === 'string' ? JSON.parse(response.data || '{}') : (response.data || {});
+      const isSuccess = rawData.rcode === 0;
+      return { ...response, data: { ...(rawData || {}), isSuccess } };
     });
   }
 

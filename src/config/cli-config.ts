@@ -62,7 +62,9 @@ const defaultOptions: CliOption = {
   lintStagedConfig: {
     [eslintExt]: 'eslint --fix',
     '*': 'soy prettier-write'
-  }
+  },
+  gitlabUrl: 'http://git.rantron.biz:3002',
+  useRemote: 'origin'
 };
 export async function loadCliOptions(overrides?: Partial<CliOption>, cwd = process.cwd()) {
   const options = {

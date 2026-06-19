@@ -4,7 +4,7 @@ import path from 'path';
 import * as kolorist from 'kolorist';
 
 export async function gitCommitVerify() {
-  const gitPath = await execCommand('git', ['rev-parse']);
+  const gitPath = await execCommand('git', ['rev-parse', '--show-toplevel']);
 
   const gitMsgPath = path.join(gitPath, '.git', 'COMMIT_EDITMSG');
 

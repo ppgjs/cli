@@ -8,7 +8,7 @@ export async function openStore(wrapUrL = '') {
   const open = await import('open');
   logInfo(`打开地址: ${openUrl}`);
   try {
-    await open.default(openUrl, { wait: true });
+    await open.default(openUrl);
     logSuccess(`Default browser opened successfully.`);
   } catch (error) {
     logError(`Unable to open the default browser:${error}`);
