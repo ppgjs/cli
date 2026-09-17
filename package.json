@@ -1,6 +1,6 @@
 {
   "name": "@ppgjs/cli",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "description": "PpgJs's command line tools",
   "author": {
     "name": "BoycePan",
@@ -36,7 +36,9 @@
     "publish-pkg": "pnpm -r publish --access public",
     "typecheck": "tsc --noEmit",
     "release": "pnpm build && npx ppg release && npm publish --access public",
-    "test": "node dist/index.cjs --help"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cli": "node dist/index.cjs --help"
   },
   "bin": {
     "ppg": "dist/index.cjs"
@@ -66,7 +68,8 @@
     "eslint-config-soybeanjs": "^0.5.9",
     "tsx": "^3.13.0",
     "typescript": "^5.2.2",
-    "unbuild": "^2.0.0"
+    "unbuild": "^2.0.0",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "@types/semver": "^7.7.1",

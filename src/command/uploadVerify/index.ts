@@ -50,6 +50,11 @@ const UploadIdMap = {
   [EPlatForm.AD_STATIC]: [37],
 };
 
+/* 查找可用版本号时，发布记录的分页大小 */
+const PagingLogPageSize = 10;
+/* 查找可用版本号时，最多向下翻的页数 */
+const PagingLogMaxPage = 5;
+
 const UploadProjectList: IUploadBaseConfig[] = [
   {
     id: 49,
@@ -116,6 +121,62 @@ export default class UploadVerifyFile {
     this.currentPlatfrom = platfrom;
   }
 
+  /* 是否是可用于递增的版本号，可用则返回递增后的版本号 */
+  private getIncrementedVersion = (version?: unknown): string => {
+    if (typeof version !== 'string' || !version.trim()) return '';
+    return inc(version.trim(), 'patch') || '';
+  };
+
+  /* 线上版本号不可用时(如 qw_txt)，查发布记录从上往下找第一个可用的版本号 */
+  private getLogPublishVersion = async (
+    staticResourceDirectoryId: number
+  ): Promise<{ oldPublishVersion: string; newPublishVersion: string }> => {
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const {
+        data: { data: pagingData, isSuccess },
+      } = await this.uploadRequest.axiosInstance.get<IResponse>(
+        'https://mgrapi.fhd001.com/mgr/rdc/staticResource/pagingStaticResourcePublishLog.do',
+        {
+          params: {
+            page,
+            pageSize: PagingLogPageSize,
+            staticResourceDirectoryId,
+          },
+        }
+      );
+
+      if (!isSuccess) {
+        logError(
+          `获取发布记录失败 staticResourceDirectoryId: ${staticResourceDirectoryId} -> ${JSON.stringify(
+            pagingData
+          )}`
+        );
+        break;
+      }
+
+      const logList: { version?: string }[] = pagingData?.list || [];
+      const matchedLog = logList.find((log) =>
+        this.getIncrementedVersion(log?.version)
+      );
+      if (matchedLog) {
+        const oldPublishVersion = String(matchedLog.version).trim();
+
+        return {
+          oldPublishVersion,
+          newPublishVersion: this.getIncrementedVersion(oldPublishVersion),
+        };
+      }
+
+      totalPages = Number(pagingData?.pages) || 1;
+      page += 1;
+    } while (page <= totalPages && page <= PagingLogMaxPage);
+
+    return { oldPublishVersion: '', newPublishVersion: '' };
+  };
+
   private initUploadInfoList = async () => {
     const {
       data: { data: projectList, isSuccess },
@@ -127,30 +188,64 @@ export default class UploadVerifyFile {
       throw new Error('获取上传配置失败');
     }
 
-    const uploadInfoList = UploadProjectList.map(
-      (item): IUploadToastConfig | false => {
-        const onlineConfig = projectList.find(
-          (project: any) => project.id === item.id
-        );
-        if (!onlineConfig?.lastStaticResourcePublishLog?.version) {
-          console.info('线上配置不存在:', item.name, ',id:', item.id);
+    const uploadInfoList = await Promise.all(
+      UploadProjectList.map(
+        async (item): Promise<IUploadToastConfig | false> => {
+          const onlineConfig = projectList.find(
+            (project: any) => project.id === item.id
+          );
+          if (!onlineConfig) {
+            console.info('线上配置不存在:', item.name, ',id:', item.id);
 
-          return false;
+            return false;
+          }
+
+          const lastPublishVersion =
+            onlineConfig.lastStaticResourcePublishLog?.version;
+          let oldPublishVersion =
+            typeof lastPublishVersion === 'string'
+              ? lastPublishVersion.trim()
+              : '';
+          let newPublishVersion =
+            this.getIncrementedVersion(lastPublishVersion);
+
+          /* lastStaticResourcePublishLog.version 可能不是版本号，
+             此时需要查发布记录，从上往下找可用的版本号作为 oldPublishVersion */
+          if (!newPublishVersion) {
+            const logPublishVersion = await this.getLogPublishVersion(item.id);
+            oldPublishVersion = logPublishVersion.oldPublishVersion;
+            newPublishVersion = logPublishVersion.newPublishVersion;
+
+            if (!newPublishVersion) {
+              console.info(
+                '未找到可用的线上版本号:',
+                item.name,
+                ',id:',
+                item.id
+              );
+
+              return false;
+            }
+
+            logInfo(
+              `${item.name} 线上版本号「${
+                lastPublishVersion ?? ''
+              }」不可用，已取发布记录中的「${oldPublishVersion}」作为上次版本号`
+            );
+          }
+
+          return {
+            ...item,
+            oldPublishVersion,
+            newPublishVersion,
+          };
         }
+      )
+    );
 
-        const { version: oldPublishVersion } =
-          onlineConfig?.lastStaticResourcePublishLog || {};
-        const newPublishVersion = inc(oldPublishVersion, 'patch') || '';
-
-        return {
-          ...item,
-          oldPublishVersion,
-          newPublishVersion,
-        };
-      }
-    ).filter(Boolean) as IUploadToastConfig[];
-
-    this.uploadInfoList = uploadInfoList;
+    this.uploadInfoList = uploadInfoList.filter(
+      Boolean
+    ) as IUploadToastConfig[];
   };
 
   private publicZip = async (uploadInfo: IUploadToastConfig) => {
